@@ -11,6 +11,7 @@ import (
 	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/faiface/pixel/text"
+	"github.com/lucasb-eyer/go-colorful"
 	"golang.org/x/image/colornames"
 	"golang.org/x/image/font/basicfont"
 )
@@ -26,24 +27,35 @@ func run() {
 		panic(err)
 	}
 
-	antSpeed := 100 * time.Millisecond
+	antSpeed := 10 * time.Millisecond
 
-	scrollSpeed := 5 * time.Millisecond
+	scrollSpeed := 250 * time.Microsecond
 
-	ant := langoth.NewAnt(
-		langoth.Step{
-			Color:  colornames.Red,
-			Action: langoth.ActionTurnLeft,
-		},
-		langoth.Step{
-			Color:  colornames.Blue,
-			Action: langoth.ActionTurnRight,
-		},
-		langoth.Step{
-			Color:  colornames.Green,
-			Action: langoth.ActionTurnRight,
-		},
-	)
+	// steps := langoth.Steps{
+	// 	langoth.Step{
+	// 		Action: langoth.ActionTurnRight,
+	// 	},
+	// 	langoth.Step{
+	// 		Action: langoth.ActionTurnLeft,
+	// 	},
+	// 	langoth.Step{
+	// 		Action: langoth.ActionTurnLeft,
+	// 	},
+	// 	langoth.Step{
+	// 		Action: langoth.ActionTurnRight,
+	// 	},
+	// }
+
+	steps := langoth.StepsAwesome2
+	palette, err := colorful.SoftPalette(len(steps))
+	if err != nil {
+		panic(err)
+	}
+	for i := range palette {
+		steps[i].Color = palette[i]
+	}
+
+	ant := langoth.NewAnt(steps...)
 
 	var (
 		camPos           = pixel.ZV
@@ -70,11 +82,11 @@ func run() {
 		dt := time.Since(last).Seconds()
 		last = time.Now()
 
-		if win.JustPressed(pixelgl.KeyKPAdd) {
+		if win.Pressed(pixelgl.KeyKPAdd) {
 			log.Println(antSpeed)
 			antSpeed += scrollSpeed
 		}
-		if win.JustPressed(pixelgl.KeyKPSubtract) {
+		if win.Pressed(pixelgl.KeyKPSubtract) {
 			log.Println(antSpeed)
 			antSpeed -= scrollSpeed
 		}

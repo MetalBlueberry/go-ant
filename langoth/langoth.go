@@ -9,9 +9,9 @@ import (
 type Ant struct {
 	Cells     map[Point]*Cell
 	Position  *Cell
-	Steps     []Step
 	Direction Direction
 
+	steps []Step
 	sync.Locker
 }
 
@@ -52,6 +52,81 @@ const (
 	DirectionInvalid
 )
 
+var (
+	StepsSimple Steps = Steps{
+		{
+			Action: ActionTurnLeft,
+		},
+		{
+			Action: ActionTurnRight,
+		},
+	}
+	StepsAwesome Steps = Steps{
+		{
+			Action: ActionTurnRight,
+		},
+		{
+			Action: ActionTurnLeft,
+		},
+		{
+			Action: ActionTurnRight,
+		},
+		{
+			Action: ActionTurnRight,
+		},
+		{
+			Action: ActionTurnRight,
+		},
+		{
+			Action: ActionTurnRight,
+		},
+		{
+			Action: ActionTurnRight,
+		},
+		{
+			Action: ActionTurnLeft,
+		},
+		{
+			Action: ActionTurnLeft,
+		},
+	}
+	StepsAwesome2 = Steps{
+		{
+			Action: ActionTurnRight,
+		},
+		{
+			Action: ActionTurnLeft,
+		},
+		{
+			Action: ActionTurnRight,
+		},
+		{
+			Action: ActionTurnRight,
+		},
+		{
+			Action: ActionTurnRight,
+		},
+		{
+			Action: ActionTurnRight,
+		},
+		{
+			Action: ActionTurnLeft,
+		},
+		{
+			Action: ActionTurnLeft,
+		},
+		{
+			Action: ActionTurnLeft,
+		},
+		{
+			Action: ActionTurnRight,
+		},
+		{
+			Action: ActionTurnRight,
+		},
+	}
+)
+
 func (d Direction) Turn(action Action) Direction {
 	switch action {
 	case ActionTurnLeft:
@@ -69,7 +144,7 @@ func (ant *Ant) Next() *Cell {
 
 	ant.Direction = ant.Direction.Turn(ant.Position.Step.Action)
 
-	ant.Position.UpdateNextStep(ant.Steps)
+	ant.Position.UpdateNextStep(ant.steps)
 
 	nextPoint := ant.Position.Point.Walk(ant.Direction)
 
@@ -105,7 +180,7 @@ func (ant *Ant) EnsureCellAt(position Point) *Cell {
 	if !exist {
 		cell = &Cell{
 			Point: position,
-			Step:  ant.Steps[0],
+			Step:  ant.steps[0],
 		}
 		ant.Cells[position] = cell
 	}
@@ -138,7 +213,7 @@ func NewAnt(steps ...Step) *Ant {
 	return &Ant{
 		Cells:    cells,
 		Position: cells[initialPoint],
-		Steps:    steps,
+		steps:    steps,
 		Locker:   &sync.Mutex{},
 	}
 }
