@@ -3,26 +3,32 @@ package main
 import (
 	"fmt"
 	"go-ant/langoth"
+	"log"
+	"math"
 	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
+	"github.com/faiface/pixel/text"
 	"golang.org/x/image/colornames"
+	"golang.org/x/image/font/basicfont"
 )
 
 func run() {
 	cfg := pixelgl.WindowConfig{
 		Title:  "Pixel Rocks!",
 		Bounds: pixel.R(0, 0, 1024, 768),
-		VSync:  false,
+		VSync:  true,
 	}
 	win, err := pixelgl.NewWindow(cfg)
 	if err != nil {
 		panic(err)
 	}
 
-	ticker := time.NewTicker(1 * time.Millisecond)
+	antSpeed := 100 * time.Millisecond
+
+	scrollSpeed := 5 * time.Millisecond
 
 	ant := langoth.NewAnt(
 		langoth.Step{
@@ -33,29 +39,87 @@ func run() {
 			Color:  colornames.Blue,
 			Action: langoth.ActionTurnRight,
 		},
+		langoth.Step{
+			Color:  colornames.Green,
+			Action: langoth.ActionTurnRight,
+		},
 	)
 
+	var (
+		camPos           = pixel.ZV
+		camSpeed         = 500.0
+		camZoom          = 1.0
+		camZoomSpeed     = 1.2
+		screenTextMargin = pixel.V(10, -10)
+	)
+
+	imd := imdraw.New(nil)
+
+	go func() {
+		for {
+			<-time.After(antSpeed)
+			ant.Lock()
+			ant.Next()
+			ant.Unlock()
+		}
+	}()
+
+	last := time.Now()
+
 	for !win.Closed() {
-		<-ticker.C
-		cam := pixel.IM.Moved(win.Bounds().Center())
+		dt := time.Since(last).Seconds()
+		last = time.Now()
+
+		if win.JustPressed(pixelgl.KeyKPAdd) {
+			log.Println(antSpeed)
+			antSpeed += scrollSpeed
+		}
+		if win.JustPressed(pixelgl.KeyKPSubtract) {
+			log.Println(antSpeed)
+			antSpeed -= scrollSpeed
+		}
+
+		if win.Pressed(pixelgl.KeyLeft) {
+			camPos.X -= camSpeed * dt
+		}
+		if win.Pressed(pixelgl.KeyRight) {
+			camPos.X += camSpeed * dt
+		}
+		if win.Pressed(pixelgl.KeyDown) {
+			camPos.Y -= camSpeed * dt
+		}
+		if win.Pressed(pixelgl.KeyUp) {
+			camPos.Y += camSpeed * dt
+		}
+
+		camZoom *= math.Pow(camZoomSpeed, win.MouseScroll().Y)
+
+		cam := pixel.IM.Scaled(camPos, camZoom).Moved(win.Bounds().Center().Sub(camPos))
 		win.SetMatrix(cam)
-		ant.Next()
-		fmt.Print(ant)
 
 		win.Clear(colornames.Black)
 
-		imd := imdraw.New(nil)
-
 		cellSize := 5.0
 
+		imd.Clear()
+		ant.Lock()
 		for _, cell := range ant.Cells {
 			imd.Color = cell.Step.Color
 			imd.Push(pixel.V(float64(cell.X)*(cellSize), float64(cell.Y)*(cellSize)))
 			imd.Push(pixel.V(float64(cell.X)*(cellSize)+cellSize, float64(cell.Y)*(cellSize)+cellSize))
 			imd.Rectangle(0)
 		}
+		ant.Unlock()
 
 		imd.Draw(win)
+
+		basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
+		basicTxt := text.New(pixel.V(100, 500), basicAtlas)
+
+		fmt.Fprintf(basicTxt, "Speed: %s\n", antSpeed)
+		fmt.Fprintf(basicTxt, "Framerate: %f\n", 1.0/dt)
+		win.SetMatrix(pixel.IM)
+		basicTxt.Draw(win, pixel.IM.Moved(win.Bounds().Vertices()[1].Sub(basicTxt.Bounds().Vertices()[1]).Add(screenTextMargin)))
 
 		win.Update()
 	}

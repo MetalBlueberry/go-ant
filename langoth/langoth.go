@@ -3,6 +3,7 @@ package langoth
 import (
 	"image/color"
 	"strings"
+	"sync"
 )
 
 type Ant struct {
@@ -10,6 +11,8 @@ type Ant struct {
 	Position  *Cell
 	Steps     []Step
 	Direction Direction
+
+	sync.Locker
 }
 
 type Point struct {
@@ -62,7 +65,7 @@ func (d Direction) Turn(action Action) Direction {
 	}
 }
 
-func (ant *Ant) Next() {
+func (ant *Ant) Next() *Cell {
 
 	ant.Direction = ant.Direction.Turn(ant.Position.Step.Action)
 
@@ -70,7 +73,11 @@ func (ant *Ant) Next() {
 
 	nextPoint := ant.Position.Point.Walk(ant.Direction)
 
+	previousPosition := ant.Position
+
 	ant.Position = ant.EnsureCellAt(nextPoint)
+
+	return previousPosition
 
 }
 
@@ -132,6 +139,7 @@ func NewAnt(steps ...Step) *Ant {
 		Cells:    cells,
 		Position: cells[initialPoint],
 		Steps:    steps,
+		Locker:   &sync.Mutex{},
 	}
 }
 
