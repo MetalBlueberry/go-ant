@@ -13,7 +13,8 @@ type Ant struct {
 
 	Dimensions Dimensions
 
-	steps []Step
+	steps      []Step
+	totalSteps int64
 	sync.Locker
 }
 
@@ -82,9 +83,16 @@ func (d Direction) Turn(action Action) Direction {
 	}
 }
 
+func (ant *Ant) TotalSteps() int64 {
+	ant.Lock()
+	defer ant.Unlock()
+	return ant.totalSteps
+}
+
 func (ant *Ant) Next() (*Cell, error) {
 	ant.Lock()
 	defer ant.Unlock()
+	ant.totalSteps++
 
 	ant.Direction = ant.Direction.Turn(ant.Position.Step.Action)
 
@@ -142,6 +150,10 @@ func (steps Steps) Numerate() {
 		steps[i].nextIndex = i + 1
 	}
 	steps[len(steps)-1].nextIndex = 0
+}
+
+func NewBoard(size int64) Dimensions {
+	return NewDimensions(-size, -size, size, size)
 }
 
 func NewDimensions(minX, minY, maxX, maxY int64) Dimensions {

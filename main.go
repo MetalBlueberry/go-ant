@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/faiface/pixel"
-	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/faiface/pixel/text"
 	"github.com/lucasb-eyer/go-colorful"
@@ -42,7 +41,7 @@ func run() {
 	}
 
 	ant := langton.NewAntFromString(
-		langton.NewDimensions(-3000, -3000, 3000, 3000),
+		langton.NewBoard(1000),
 		steps)
 
 	var (
@@ -55,7 +54,6 @@ func run() {
 		antRealSpeed     uint64 = 0
 	)
 
-	imd := imdraw.New(nil)
 	go func() {
 		ticker := time.NewTicker(time.Duration(time.Second))
 		for {
@@ -69,13 +67,17 @@ func run() {
 			if antSpeed > 0 {
 				<-time.After(antSpeed)
 			}
-			ant.Next()
+			_, err := ant.Next()
+			if err != nil {
+				return
+			}
 			atomic.AddUint64(&antStepCount, 1)
 		}
 	}()
 
-	last := time.Now()
+	loadLastPic := LastPic(ant, palette)
 
+	last := time.Now()
 	for !win.Closed() {
 		dt := time.Since(last).Seconds()
 		last = time.Now()
@@ -116,22 +118,7 @@ func run() {
 
 		win.Clear(colornames.Black)
 
-		cellSize := 5.0
-
-		imd.Clear()
-		ant.Lock()
-		for _, cell := range ant.Cells {
-			if cell.Step.Action == langton.ActionNone {
-				continue
-			}
-			imd.Color = palette[cell.Step.Index]
-			imd.Push(pixel.V(float64(cell.X)*(cellSize), float64(cell.Y)*(cellSize)))
-			imd.Push(pixel.V(float64(cell.X)*(cellSize)+cellSize, float64(cell.Y)*(cellSize)+cellSize))
-			imd.Rectangle(0)
-		}
-		ant.Unlock()
-
-		imd.Draw(win)
+		loadLastPic().Draw(win, pixel.IM)
 
 		basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
 		basicTxt := text.New(pixel.V(100, 500), basicAtlas)
@@ -152,4 +139,25 @@ func main() {
 	flag.StringVar(&steps, "steps", "LR", "Provide the sequence as L for left and R for right")
 	flag.Parse()
 	pixelgl.Run(run)
+}
+
+func LastPic(ant *langton.Ant, palette []colorful.Color) func() *pixel.Sprite {
+	steps := ant.TotalSteps()
+	var (
+		sprite *pixel.Sprite
+	)
+	img := langton.ToImage(ant, palette)
+	pic := pixel.PictureDataFromImage(img)
+	sprite = pixel.NewSprite(pic, pic.Bounds())
+
+	return func() *pixel.Sprite {
+		if ant.TotalSteps() == steps {
+			return sprite
+		}
+		steps = ant.TotalSteps()
+		img := langton.ToImage(ant, palette)
+		pic := pixel.PictureDataFromImage(img)
+		sprite = pixel.NewSprite(pic, pic.Bounds())
+		return sprite
+	}
 }
