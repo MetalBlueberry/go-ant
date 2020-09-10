@@ -10,10 +10,16 @@ type Ant struct {
 	Position  *Cell
 	Direction Direction
 
+	Dimensions Dimensions
+
 	steps []Step
 	sync.Locker
 }
 
+type Dimensions struct {
+	TopRight   Point
+	BottomLeft Point
+}
 type Point struct {
 	X int64
 	Y int64

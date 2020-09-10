@@ -230,3 +230,10 @@ func TestStepsFromString(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkNext(b *testing.B) {
+	ant := NewAnt(StepsAwesome...)
+	for i := 0; i < b.N; i++ {
+		ant.Next()
+	}
+}
