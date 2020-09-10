@@ -3,7 +3,6 @@ package langton
 import (
 	"errors"
 	"strings"
-	"sync"
 )
 
 type Ant struct {
@@ -15,7 +14,6 @@ type Ant struct {
 
 	steps      []Step
 	totalSteps int64
-	sync.Locker
 }
 
 type Dimensions struct {
@@ -84,14 +82,10 @@ func (d Direction) Turn(action Action) Direction {
 }
 
 func (ant *Ant) TotalSteps() int64 {
-	ant.Lock()
-	defer ant.Unlock()
 	return ant.totalSteps
 }
 
 func (ant *Ant) Next() (*Cell, error) {
-	ant.Lock()
-	defer ant.Unlock()
 	ant.totalSteps++
 
 	ant.Direction = ant.Direction.Turn(ant.Position.Step.Action)
@@ -231,7 +225,6 @@ func NewAnt(dimensions Dimensions, steps ...Step) *Ant {
 		Cells:      cells,
 		Position:   cell,
 		steps:      steps,
-		Locker:     &sync.Mutex{},
 		Dimensions: dimensions,
 	}
 }

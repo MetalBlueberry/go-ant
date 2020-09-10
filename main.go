@@ -19,6 +19,7 @@ import (
 )
 
 var steps string
+var antSpeed int64
 
 func run() {
 	cfg := pixelgl.WindowConfig{
@@ -30,8 +31,6 @@ func run() {
 	if err != nil {
 		panic(err)
 	}
-
-	antSpeed := time.Second
 
 	// scrollSpeed := time.Duration(1)
 
@@ -65,7 +64,7 @@ func run() {
 	go func() {
 		for {
 			if antSpeed > 0 {
-				<-time.After(antSpeed)
+				<-time.After(time.Duration(antSpeed))
 			}
 			_, err := ant.Next()
 			if err != nil {
@@ -93,8 +92,8 @@ func run() {
 				antSpeed++
 			}
 			antSpeed = antSpeed * 2
-			if antSpeed > time.Second*5 {
-				antSpeed = time.Second * 5
+			if time.Duration(antSpeed) > time.Second*5 {
+				antSpeed = int64(time.Second * 5)
 			}
 		}
 
@@ -125,7 +124,7 @@ func run() {
 
 		p := message.NewPrinter(language.Spanish)
 
-		p.Fprintf(basicTxt, "Delay between steps: %s\n", antSpeed)
+		p.Fprintf(basicTxt, "Delay between steps: %s\n", time.Duration(antSpeed))
 		p.Fprintf(basicTxt, "Real Steps Per Seccond: %d\n", atomic.LoadUint64(&antRealSpeed))
 		fmt.Fprintf(basicTxt, "Framerate: %f\n", 1.0/dt)
 		win.SetMatrix(pixel.IM)
@@ -137,6 +136,7 @@ func run() {
 
 func main() {
 	flag.StringVar(&steps, "steps", "LR", "Provide the sequence as L for left and R for right")
+	flag.Int64Var(&antSpeed, "speed", time.Second.Nanoseconds(), "the number of nanoseconds to want between interactions. 0 for no wait")
 	flag.Parse()
 	pixelgl.Run(run)
 }

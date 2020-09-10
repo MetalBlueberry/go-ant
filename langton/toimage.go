@@ -7,8 +7,6 @@ import (
 )
 
 func ToImage(ant *Ant, pallete []colorful.Color) image.Image {
-	ant.Lock()
-	defer ant.Unlock()
 
 	r := image.Rect(
 		int(ant.Dimensions.BottomLeft.X),
