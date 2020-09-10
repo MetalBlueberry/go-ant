@@ -1,7 +1,6 @@
 package langoth
 
 import (
-	"image/color"
 	"strings"
 	"sync"
 )
@@ -28,7 +27,7 @@ type Cell struct {
 type Steps []Step
 
 type Step struct {
-	Color  color.Color
+	Index  int
 	Action Action
 
 	nextIndex int
@@ -141,7 +140,8 @@ func (d Direction) Turn(action Action) Direction {
 }
 
 func (ant *Ant) Next() *Cell {
-
+	ant.Lock()
+	defer ant.Unlock()
 	ant.Direction = ant.Direction.Turn(ant.Position.Step.Action)
 
 	ant.Position.UpdateNextStep(ant.steps)
@@ -153,7 +153,6 @@ func (ant *Ant) Next() *Cell {
 	ant.Position = ant.EnsureCellAt(nextPoint)
 
 	return previousPosition
-
 }
 
 func (cell *Cell) UpdateNextStep(steps []Step) {
@@ -189,9 +188,31 @@ func (ant *Ant) EnsureCellAt(position Point) *Cell {
 
 func (steps Steps) Numerate() {
 	for i := 0; i < len(steps); i++ {
+		steps[i].Index = i
 		steps[i].nextIndex = i + 1
 	}
 	steps[len(steps)-1].nextIndex = 0
+}
+
+func StepsFromString(steps string) Steps {
+	out := make(Steps, len(steps), len(steps))
+	for i, c := range steps {
+		switch c {
+		case rune(ActionTurnLeft):
+			out[i] = Step{
+				Action: ActionTurnLeft,
+			}
+		case rune(ActionTurnRight):
+			out[i] = Step{
+				Action: ActionTurnRight,
+			}
+		}
+	}
+	return out
+}
+
+func NewAntFromString(steps string) *Ant {
+	return NewAnt(StepsFromString(steps)...)
 }
 
 func NewAnt(steps ...Step) *Ant {

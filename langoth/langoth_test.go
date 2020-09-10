@@ -1,10 +1,9 @@
 package langoth
 
 import (
+	"reflect"
 	"strings"
 	"testing"
-
-	"golang.org/x/image/colornames"
 )
 
 func Test0(t *testing.T) {
@@ -23,7 +22,7 @@ func Test2(t *testing.T) {
 	Iterations(t, 2, `
 --|-
 ―RR―
--L--
+-L|-
 --|-`)
 }
 
@@ -38,11 +37,9 @@ func Test5(t *testing.T) {
 func Iterations(t *testing.T, n int, expected string) {
 	steps := []Step{
 		{
-			Color:  colornames.Red,
 			Action: ActionTurnLeft,
 		},
 		{
-			Color:  colornames.Red,
 			Action: ActionTurnRight,
 		},
 	}
@@ -164,6 +161,71 @@ func TestCell_UpdateNextStep(t *testing.T) {
 			cell.UpdateNextStep(tt.args.steps)
 			if steps[tt.expect] != cell.Step {
 				t.Errorf("cell.UpdateNextStep = %v, want %v", cell.Step, steps[tt.expect])
+			}
+		})
+	}
+}
+
+func TestStepsFromString(t *testing.T) {
+	type args struct {
+		steps string
+	}
+	tests := []struct {
+		name string
+		args args
+		want Steps
+	}{
+		{
+			name: "Left Right",
+			args: args{
+				steps: "LR",
+			},
+			want: Steps{
+				Step{
+					Action: ActionTurnLeft,
+				},
+				Step{
+					Action: ActionTurnRight,
+				},
+			},
+		},
+		{
+			name: "More steps",
+			args: args{
+				steps: "LRRLLRRR",
+			},
+			want: Steps{
+				Step{
+					Action: ActionTurnLeft,
+				},
+				Step{
+					Action: ActionTurnRight,
+				},
+				Step{
+					Action: ActionTurnRight,
+				},
+				Step{
+					Action: ActionTurnLeft,
+				},
+				Step{
+					Action: ActionTurnLeft,
+				},
+				Step{
+					Action: ActionTurnRight,
+				},
+				Step{
+					Action: ActionTurnRight,
+				},
+				Step{
+					Action: ActionTurnRight,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := StepsFromString(tt.args.steps); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("StepsFromString() = %v, want %v", got, tt.want)
 			}
 		})
 	}

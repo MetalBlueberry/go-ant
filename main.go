@@ -31,28 +31,10 @@ func run() {
 
 	scrollSpeed := 250 * time.Microsecond
 
-	// steps := langoth.Steps{
-	// 	langoth.Step{
-	// 		Action: langoth.ActionTurnRight,
-	// 	},
-	// 	langoth.Step{
-	// 		Action: langoth.ActionTurnLeft,
-	// 	},
-	// 	langoth.Step{
-	// 		Action: langoth.ActionTurnLeft,
-	// 	},
-	// 	langoth.Step{
-	// 		Action: langoth.ActionTurnRight,
-	// 	},
-	// }
-
 	steps := langoth.StepsAwesome2
 	palette, err := colorful.SoftPalette(len(steps))
 	if err != nil {
 		panic(err)
-	}
-	for i := range palette {
-		steps[i].Color = palette[i]
 	}
 
 	ant := langoth.NewAnt(steps...)
@@ -70,9 +52,7 @@ func run() {
 	go func() {
 		for {
 			<-time.After(antSpeed)
-			ant.Lock()
 			ant.Next()
-			ant.Unlock()
 		}
 	}()
 
@@ -116,7 +96,7 @@ func run() {
 		imd.Clear()
 		ant.Lock()
 		for _, cell := range ant.Cells {
-			imd.Color = cell.Step.Color
+			imd.Color = palette[cell.Step.Index]
 			imd.Push(pixel.V(float64(cell.X)*(cellSize), float64(cell.Y)*(cellSize)))
 			imd.Push(pixel.V(float64(cell.X)*(cellSize)+cellSize, float64(cell.Y)*(cellSize)+cellSize))
 			imd.Rectangle(0)
