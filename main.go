@@ -1,10 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"go-ant/langoth"
-	"log"
 	"math"
+	"sync/atomic"
 	"time"
 
 	"github.com/faiface/pixel"
@@ -14,7 +15,11 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 	"golang.org/x/image/colornames"
 	"golang.org/x/image/font/basicfont"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
+
+var steps string
 
 func run() {
 	cfg := pixelgl.WindowConfig{
@@ -27,32 +32,43 @@ func run() {
 		panic(err)
 	}
 
-	antSpeed := 10 * time.Millisecond
+	antSpeed := time.Second
 
-	scrollSpeed := 250 * time.Microsecond
+	// scrollSpeed := time.Duration(1)
 
-	steps := langoth.StepsAwesome2
 	palette, err := colorful.SoftPalette(len(steps))
 	if err != nil {
 		panic(err)
 	}
 
-	ant := langoth.NewAnt(steps...)
+	ant := langoth.NewAntFromString(steps)
 
 	var (
-		camPos           = pixel.ZV
-		camSpeed         = 500.0
-		camZoom          = 1.0
-		camZoomSpeed     = 1.2
-		screenTextMargin = pixel.V(10, -10)
+		camPos                  = pixel.ZV
+		camSpeed                = 500.0
+		camZoom                 = 1.0
+		camZoomSpeed            = 1.2
+		screenTextMargin        = pixel.V(10, -10)
+		antStepCount     uint64 = 0
+		antRealSpeed     uint64 = 0
 	)
 
 	imd := imdraw.New(nil)
-
+	go func() {
+		ticker := time.NewTicker(time.Duration(time.Second))
+		for {
+			<-ticker.C
+			atomic.StoreUint64(&antRealSpeed, atomic.LoadUint64(&antStepCount))
+			atomic.StoreUint64(&antStepCount, 0)
+		}
+	}()
 	go func() {
 		for {
-			<-time.After(antSpeed)
+			if antSpeed > 0 {
+				<-time.After(antSpeed)
+			}
 			ant.Next()
+			atomic.AddUint64(&antStepCount, 1)
 		}
 	}()
 
@@ -63,12 +79,19 @@ func run() {
 		last = time.Now()
 
 		if win.Pressed(pixelgl.KeyKPAdd) {
-			log.Println(antSpeed)
-			antSpeed += scrollSpeed
+			antSpeed = antSpeed / 2
+			if antSpeed < 0 {
+				antSpeed = 0
+			}
 		}
 		if win.Pressed(pixelgl.KeyKPSubtract) {
-			log.Println(antSpeed)
-			antSpeed -= scrollSpeed
+			if antSpeed == 0 {
+				antSpeed++
+			}
+			antSpeed = antSpeed * 2
+			if antSpeed < 0 {
+				antSpeed = math.MaxInt64
+			}
 		}
 
 		if win.Pressed(pixelgl.KeyLeft) {
@@ -108,7 +131,10 @@ func run() {
 		basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
 		basicTxt := text.New(pixel.V(100, 500), basicAtlas)
 
-		fmt.Fprintf(basicTxt, "Speed: %s\n", antSpeed)
+		p := message.NewPrinter(language.Spanish)
+
+		p.Fprintf(basicTxt, "Delay between steps: %s\n", antSpeed)
+		p.Fprintf(basicTxt, "Real Steps Per Seccond: %d\n", atomic.LoadUint64(&antRealSpeed))
 		fmt.Fprintf(basicTxt, "Framerate: %f\n", 1.0/dt)
 		win.SetMatrix(pixel.IM)
 		basicTxt.Draw(win, pixel.IM.Moved(win.Bounds().Vertices()[1].Sub(basicTxt.Bounds().Vertices()[1]).Add(screenTextMargin)))
@@ -118,5 +144,7 @@ func run() {
 }
 
 func main() {
+	flag.StringVar(&steps, "steps", "LR", "Provide the sequence as L for left and R for right")
+	flag.Parse()
 	pixelgl.Run(run)
 }
