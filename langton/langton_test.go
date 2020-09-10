@@ -1,4 +1,4 @@
-package langoth
+package langton
 
 import (
 	"reflect"

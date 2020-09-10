@@ -1,4 +1,4 @@
-package langoth
+package langton
 
 import (
 	"strings"
@@ -52,78 +52,8 @@ const (
 )
 
 var (
-	StepsSimple Steps = Steps{
-		{
-			Action: ActionTurnLeft,
-		},
-		{
-			Action: ActionTurnRight,
-		},
-	}
-	StepsAwesome Steps = Steps{
-		{
-			Action: ActionTurnRight,
-		},
-		{
-			Action: ActionTurnLeft,
-		},
-		{
-			Action: ActionTurnRight,
-		},
-		{
-			Action: ActionTurnRight,
-		},
-		{
-			Action: ActionTurnRight,
-		},
-		{
-			Action: ActionTurnRight,
-		},
-		{
-			Action: ActionTurnRight,
-		},
-		{
-			Action: ActionTurnLeft,
-		},
-		{
-			Action: ActionTurnLeft,
-		},
-	}
-	StepsAwesome2 = Steps{
-		{
-			Action: ActionTurnRight,
-		},
-		{
-			Action: ActionTurnLeft,
-		},
-		{
-			Action: ActionTurnRight,
-		},
-		{
-			Action: ActionTurnRight,
-		},
-		{
-			Action: ActionTurnRight,
-		},
-		{
-			Action: ActionTurnRight,
-		},
-		{
-			Action: ActionTurnLeft,
-		},
-		{
-			Action: ActionTurnLeft,
-		},
-		{
-			Action: ActionTurnLeft,
-		},
-		{
-			Action: ActionTurnRight,
-		},
-		{
-			Action: ActionTurnRight,
-		},
-	}
+	StepsSimple  Steps = StepsFromString("LR")
+	StepsAwesome Steps = StepsFromString("RLLLLRRRLLL")
 )
 
 func (d Direction) Turn(action Action) Direction {

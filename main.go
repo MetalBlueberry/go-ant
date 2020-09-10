@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"go-ant/langoth"
+	"go-ant/langton"
 	"math"
 	"sync/atomic"
 	"time"
@@ -41,7 +41,7 @@ func run() {
 		panic(err)
 	}
 
-	ant := langoth.NewAntFromString(steps)
+	ant := langton.NewAntFromString(steps)
 
 	var (
 		camPos                  = pixel.ZV
@@ -89,8 +89,8 @@ func run() {
 				antSpeed++
 			}
 			antSpeed = antSpeed * 2
-			if antSpeed < 0 {
-				antSpeed = math.MaxInt64
+			if antSpeed > time.Second*5 {
+				antSpeed = time.Second * 5
 			}
 		}
 
