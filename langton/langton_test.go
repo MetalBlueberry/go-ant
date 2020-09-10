@@ -8,26 +8,32 @@ import (
 
 func Test0(t *testing.T) {
 	Iterations(t, 0, `
--|-
-―L―
--|-`)
+--|--
+--|--
+――L――
+--|--
+--|--`)
 }
 func Test1(t *testing.T) {
 	Iterations(t, 1, `
---|-
-―LR―
---|-`)
+--|--
+--|--
+―LR――
+--|--
+--|--`)
 }
 func Test2(t *testing.T) {
 	Iterations(t, 2, `
---|-
-―RR―
--L|-
---|-`)
+--|--
+--|--
+―RR――
+-L|--
+--|--`)
 }
 
 func Test5(t *testing.T) {
 	Iterations(t, 5, `
+--|--
 --|--
 ―RLL―
 -RR--
@@ -44,6 +50,7 @@ func Iterations(t *testing.T, n int, expected string) {
 		},
 	}
 	ant := NewAnt(
+		NewDimensions(-2, -2, 2, 2),
 		steps...,
 	)
 	for i := 0; i < n; i++ {
@@ -232,8 +239,70 @@ func TestStepsFromString(t *testing.T) {
 }
 
 func BenchmarkNext(b *testing.B) {
-	ant := NewAnt(StepsAwesome...)
+	ant := NewAnt(
+		NewDimensions(-10000, -10000, 10000, 10000),
+		StepsAwesome...)
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ant.Next()
+	}
+}
+
+func TestDimensions_IndexOf(t *testing.T) {
+	type args struct {
+		p Point
+	}
+	tests := []struct {
+		name   string
+		fields Dimensions
+		args   args
+		want   int
+	}{
+		{
+			name: "initial corner",
+			args: args{
+				p: Point{-1, -1},
+			},
+			fields: NewDimensions(-1, -1, 1, 1),
+			want:   0,
+		},
+		{
+			name: "last corner",
+			args: args{
+				p: Point{1, 1},
+			},
+			fields: NewDimensions(-1, -1, 1, 1),
+			want:   8,
+		},
+		{
+			name: "step up",
+			args: args{
+				p: Point{-1, 0},
+			},
+			fields: NewDimensions(-1, -1, 1, 1),
+			want:   3,
+		},
+		{
+			name: "step right",
+			args: args{
+				p: Point{0, -1},
+			},
+			fields: NewDimensions(-1, -1, 1, 1),
+			want:   1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dim := &Dimensions{
+				TopRight:   tt.fields.TopRight,
+				BottomLeft: tt.fields.BottomLeft,
+				width:      tt.fields.width,
+				height:     tt.fields.height,
+				size:       tt.fields.size,
+			}
+			if got := dim.IndexOf(tt.args.p); got != tt.want {
+				t.Errorf("Dimensions.IndexOf() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

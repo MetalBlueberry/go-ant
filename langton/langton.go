@@ -1,12 +1,13 @@
 package langton
 
 import (
+	"errors"
 	"strings"
 	"sync"
 )
 
 type Ant struct {
-	Cells     map[Point]*Cell
+	Cells     []Cell
 	Position  *Cell
 	Direction Direction
 
@@ -19,7 +20,12 @@ type Ant struct {
 type Dimensions struct {
 	TopRight   Point
 	BottomLeft Point
+
+	width  int64
+	height int64
+	size   int64
 }
+
 type Point struct {
 	X int64
 	Y int64
@@ -42,7 +48,8 @@ type Step struct {
 type Action rune
 
 const (
-	ActionTurnLeft  Action = 'L'
+	ActionNone      Action = 0
+	ActionTurnLeft         = 'L'
 	ActionTurnRight        = 'R'
 	ActionStright          = 'S'
 )
@@ -75,9 +82,10 @@ func (d Direction) Turn(action Action) Direction {
 	}
 }
 
-func (ant *Ant) Next() *Cell {
+func (ant *Ant) Next() (*Cell, error) {
 	ant.Lock()
 	defer ant.Unlock()
+
 	ant.Direction = ant.Direction.Turn(ant.Position.Step.Action)
 
 	ant.Position.UpdateNextStep(ant.steps)
@@ -85,10 +93,12 @@ func (ant *Ant) Next() *Cell {
 	nextPoint := ant.Position.Point.Walk(ant.Direction)
 
 	previousPosition := ant.Position
-
-	ant.Position = ant.EnsureCellAt(nextPoint)
-
-	return previousPosition
+	nextPosition, err := ant.EnsureCellAt(nextPoint)
+	if err != nil {
+		return previousPosition, err
+	}
+	ant.Position = nextPosition
+	return previousPosition, nil
 }
 
 func (cell *Cell) UpdateNextStep(steps []Step) {
@@ -110,16 +120,20 @@ func (point Point) Walk(direction Direction) Point {
 	return point
 }
 
-func (ant *Ant) EnsureCellAt(position Point) *Cell {
-	cell, exist := ant.Cells[position]
-	if !exist {
-		cell = &Cell{
+func (ant *Ant) EnsureCellAt(position Point) (*Cell, error) {
+	if !ant.Dimensions.isPointInside(position) {
+		return nil, errors.New("Next step is out of bounds")
+	}
+	posIndex := ant.Dimensions.IndexOf(position)
+	cell := &ant.Cells[posIndex]
+	if cell.Step.Action == ActionNone {
+		ant.Cells[posIndex] = Cell{
 			Point: position,
 			Step:  ant.steps[0],
 		}
-		ant.Cells[position] = cell
+		cell = &ant.Cells[posIndex]
 	}
-	return cell
+	return cell, nil
 }
 
 func (steps Steps) Numerate() {
@@ -128,6 +142,47 @@ func (steps Steps) Numerate() {
 		steps[i].nextIndex = i + 1
 	}
 	steps[len(steps)-1].nextIndex = 0
+}
+
+func NewDimensions(minX, minY, maxX, maxY int64) Dimensions {
+	dim := Dimensions{
+		BottomLeft: Point{
+			X: minX,
+			Y: minY,
+		},
+		TopRight: Point{
+			X: maxX,
+			Y: maxY,
+		},
+	}
+	dim.Init()
+	return dim
+}
+
+func (dim *Dimensions) Init() {
+	dim.height = dim.TopRight.X - dim.BottomLeft.X + 1
+	dim.width = dim.TopRight.Y - dim.BottomLeft.Y + 1
+	dim.size = dim.height * dim.width
+}
+
+func (dim *Dimensions) Center() Point {
+	return Point{
+		X: (dim.BottomLeft.X + dim.TopRight.X) / 2,
+		Y: (dim.BottomLeft.Y + dim.TopRight.Y) / 2,
+	}
+}
+
+func (dim Dimensions) isPointInside(p Point) bool {
+	return p.X >= dim.BottomLeft.X &&
+		p.X <= dim.TopRight.X &&
+		p.Y >= dim.BottomLeft.Y &&
+		p.Y <= dim.TopRight.Y
+}
+
+func (dim *Dimensions) IndexOf(p Point) int {
+	x := p.X - dim.BottomLeft.X
+	y := p.Y - dim.BottomLeft.Y
+	return int((x) + (y)*dim.height)
 }
 
 func StepsFromString(steps string) Steps {
@@ -147,58 +202,43 @@ func StepsFromString(steps string) Steps {
 	return out
 }
 
-func NewAntFromString(steps string) *Ant {
-	return NewAnt(StepsFromString(steps)...)
+func NewAntFromString(dimensions Dimensions, steps string) *Ant {
+	return NewAnt(dimensions, StepsFromString(steps)...)
 }
 
-func NewAnt(steps ...Step) *Ant {
+func NewAnt(dimensions Dimensions, steps ...Step) *Ant {
 
 	Steps(steps).Numerate()
 
-	initialPoint := Point{
-		X: 0,
-		Y: 0,
-	}
-
-	cells := map[Point]*Cell{
-		initialPoint: {
-			Step:  steps[0],
-			Point: initialPoint,
-		},
-	}
+	cells := make([]Cell, dimensions.size, dimensions.size)
+	cell := &cells[dimensions.IndexOf(dimensions.Center())]
+	cell.Point = dimensions.Center()
+	cell.Step = steps[0]
 
 	return &Ant{
-		Cells:    cells,
-		Position: cells[initialPoint],
-		steps:    steps,
-		Locker:   &sync.Mutex{},
+		Cells:      cells,
+		Position:   cell,
+		steps:      steps,
+		Locker:     &sync.Mutex{},
+		Dimensions: dimensions,
 	}
 }
 
 func (ant *Ant) String() string {
-	var minX, maxX, minY, maxY int64
-	for cell := range ant.Cells {
-		minX = min(cell.X, minX)
-		minY = min(cell.Y, minY)
-
-		maxX = max(cell.X, maxX)
-		maxY = max(cell.Y, maxY)
-	}
-
-	minX--
-	minY--
-	maxX++
-	maxY++
+	minX := ant.Dimensions.BottomLeft.X
+	minY := ant.Dimensions.BottomLeft.Y
+	maxX := ant.Dimensions.TopRight.X
+	maxY := ant.Dimensions.TopRight.Y
 
 	builder := strings.Builder{}
 	builder.Grow(int((maxX - minX) * (maxY - minY)))
 	for y := maxY; y >= minY; y-- {
 		for x := minX; x <= maxX; x++ {
-			cell, exist := ant.Cells[Point{
+			cell := ant.Cells[ant.Dimensions.IndexOf(Point{
 				X: x,
 				Y: y,
-			}]
-			if exist {
+			})]
+			if cell.Step.Action != ActionNone {
 				builder.WriteRune(rune(cell.Step.Action))
 			} else {
 				switch {

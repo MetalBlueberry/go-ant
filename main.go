@@ -41,7 +41,9 @@ func run() {
 		panic(err)
 	}
 
-	ant := langton.NewAntFromString(steps)
+	ant := langton.NewAntFromString(
+		langton.NewDimensions(-3000, -3000, 3000, 3000),
+		steps)
 
 	var (
 		camPos                  = pixel.ZV
@@ -119,6 +121,9 @@ func run() {
 		imd.Clear()
 		ant.Lock()
 		for _, cell := range ant.Cells {
+			if cell.Step.Action == langton.ActionNone {
+				continue
+			}
 			imd.Color = palette[cell.Step.Index]
 			imd.Push(pixel.V(float64(cell.X)*(cellSize), float64(cell.Y)*(cellSize)))
 			imd.Push(pixel.V(float64(cell.X)*(cellSize)+cellSize, float64(cell.Y)*(cellSize)+cellSize))
