@@ -4,7 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"go-ant/langton"
+	"image/png"
+	"log"
 	"math"
+	"net/http"
 	"sync/atomic"
 	"time"
 
@@ -12,6 +15,7 @@ import (
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/faiface/pixel/text"
 	"github.com/lucasb-eyer/go-colorful"
+	"github.com/pkg/browser"
 	"golang.org/x/image/colornames"
 	"golang.org/x/image/font/basicfont"
 	"golang.org/x/text/language"
@@ -42,6 +46,8 @@ func run() {
 	ant := langton.NewAntFromString(
 		langton.NewBoard(1000),
 		steps)
+
+	go runWebServer(ant, palette)
 
 	var (
 		camPos                  = pixel.ZV
@@ -109,6 +115,9 @@ func run() {
 		if win.Pressed(pixelgl.KeyUp) {
 			camPos.Y += camSpeed * dt
 		}
+		if win.JustPressed(pixelgl.KeyS) {
+			browser.OpenURL("http://127.0.0.1:8080/pic")
+		}
 
 		camZoom *= math.Pow(camZoomSpeed, win.MouseScroll().Y)
 
@@ -127,6 +136,7 @@ func run() {
 		p.Fprintf(basicTxt, "Delay between steps: %s\n", time.Duration(antSpeed))
 		p.Fprintf(basicTxt, "Real Steps Per Seccond: %d\n", atomic.LoadUint64(&antRealSpeed))
 		fmt.Fprintf(basicTxt, "Framerate: %f\n", 1.0/dt)
+		fmt.Fprint(basicTxt, "Press S to save the current picture")
 		win.SetMatrix(pixel.IM)
 		basicTxt.Draw(win, pixel.IM.Moved(win.Bounds().Vertices()[1].Sub(basicTxt.Bounds().Vertices()[1]).Add(screenTextMargin)))
 
@@ -138,7 +148,9 @@ func main() {
 	flag.StringVar(&steps, "steps", "LR", "Provide the sequence as L for left and R for right")
 	flag.Int64Var(&antSpeed, "speed", time.Second.Nanoseconds(), "the number of nanoseconds to want between interactions. 0 for no wait")
 	flag.Parse()
+
 	pixelgl.Run(run)
+
 }
 
 func LastPic(ant *langton.Ant, palette []colorful.Color) func() *pixel.Sprite {
@@ -159,5 +171,25 @@ func LastPic(ant *langton.Ant, palette []colorful.Color) func() *pixel.Sprite {
 		pic := pixel.PictureDataFromImage(img)
 		sprite = pixel.NewSprite(pic, pic.Bounds())
 		return sprite
+	}
+}
+
+func runWebServer(ant *langton.Ant, palette []colorful.Color) {
+	http.HandleFunc("/pic", func(w http.ResponseWriter, r *http.Request) {
+		img := langton.ToImage(ant, palette)
+		err := png.Encode(w, img)
+		if err != nil {
+			log.Printf("error encoding picture: %s", err)
+		}
+		return
+	})
+
+	server := &http.Server{
+		Addr: "0.0.0.0:8080",
+	}
+
+	err := server.ListenAndServe()
+	if err != nil {
+		panic(err)
 	}
 }
