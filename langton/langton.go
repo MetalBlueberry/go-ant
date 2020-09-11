@@ -50,7 +50,7 @@ const (
 	ActionNone      Action = 0
 	ActionTurnLeft         = 'L'
 	ActionTurnRight        = 'R'
-	ActionStright          = 'S'
+	ActionStraight         = 'S'
 )
 
 type Direction int
@@ -74,7 +74,7 @@ func (d Direction) Turn(action Action) Direction {
 		return (d + DirectionInvalid - 1) % DirectionInvalid
 	case ActionTurnRight:
 		return (d + DirectionInvalid + 1) % DirectionInvalid
-	case ActionStright:
+	case ActionStraight:
 		return d
 	default:
 		panic("Invalid action provided")
@@ -202,6 +202,10 @@ func StepsFromString(steps string) Steps {
 		case rune(ActionTurnRight):
 			out[i] = Step{
 				Action: ActionTurnRight,
+			}
+		case rune(ActionStraight):
+			out[i] = Step{
+				Action: ActionStraight,
 			}
 		}
 	}

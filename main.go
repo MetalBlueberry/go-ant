@@ -135,6 +135,7 @@ func run() {
 
 		p.Fprintf(basicTxt, "Delay between steps: %s\n", time.Duration(antSpeed))
 		p.Fprintf(basicTxt, "Real Steps Per Seccond: %d\n", atomic.LoadUint64(&antRealSpeed))
+		p.Fprintf(basicTxt, "Total Steps: %d\n", ant.TotalSteps())
 		fmt.Fprintf(basicTxt, "Framerate: %f\n", 1.0/dt)
 		fmt.Fprint(basicTxt, "Press S to save the current picture")
 		win.SetMatrix(pixel.IM)
