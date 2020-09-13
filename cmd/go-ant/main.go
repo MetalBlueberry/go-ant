@@ -37,8 +37,6 @@ func run() {
 		panic(err)
 	}
 
-	// scrollSpeed := time.Duration(1)
-
 	palette, err := colorful.SoftPalette(len(steps))
 	if err != nil {
 		panic(err)
