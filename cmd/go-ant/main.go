@@ -53,7 +53,7 @@ func run() {
 	var (
 		camPos                  = pixel.ZV
 		camSpeed                = 500.0
-		camZoom                 = 1.0
+		camZoom                 = 2.0
 		camZoomSpeed            = 1.2
 		screenTextMargin        = pixel.V(10, -10)
 		antStepCount     uint64 = 0
@@ -147,9 +147,9 @@ func run() {
 }
 
 func main() {
-	flag.StringVar(&steps, "steps", "LR", "Provide the sequence as L for left and R for right")
-	flag.Int64Var(&antSpeed, "speed", time.Second.Nanoseconds(), "the number of nanoseconds to want between interactions. 0 for no wait")
-	flag.Int64Var(&gridSize, "size", 2000, "Image width_x_height dimensions, Equivalent to grid size")
+	flag.StringVar(&steps, "steps", "RLLLLRRRLLL", "Provide the sequence as L for left and R for right")
+	flag.Int64Var(&antSpeed, "speed", 10000, "the number of nanoseconds to want between interactions. 0 for no wait")
+	flag.Int64Var(&gridSize, "size", 1000, "Image width_x_height dimensions, Equivalent to grid size")
 	flag.Parse()
 
 	pixelgl.Run(run)
@@ -161,7 +161,7 @@ func LastPic(ant *langton.Ant, palette []colorful.Color) func() *pixel.Sprite {
 	var (
 		sprite *pixel.Sprite
 	)
-	img := langton.ToImage(ant, palette)
+	img := langton.ToImage(ant, langton.ToPalette(palette))
 	pic := pixel.PictureDataFromImage(img)
 	sprite = pixel.NewSprite(pic, pic.Bounds())
 
@@ -170,7 +170,7 @@ func LastPic(ant *langton.Ant, palette []colorful.Color) func() *pixel.Sprite {
 			return sprite
 		}
 		steps = ant.TotalSteps()
-		img := langton.ToImage(ant, palette)
+		img := langton.ToImage(ant, langton.ToPalette(palette))
 		pic := pixel.PictureDataFromImage(img)
 		sprite = pixel.NewSprite(pic, pic.Bounds())
 		return sprite
@@ -179,7 +179,7 @@ func LastPic(ant *langton.Ant, palette []colorful.Color) func() *pixel.Sprite {
 
 func runWebServer(ant *langton.Ant, palette []colorful.Color) {
 	http.HandleFunc("/pic", func(w http.ResponseWriter, r *http.Request) {
-		img := langton.ToImage(ant, palette)
+		img := langton.ToImage(ant, langton.ToPalette(palette))
 		err := png.Encode(w, img)
 		if err != nil {
 			log.Printf("error encoding picture: %s", err)

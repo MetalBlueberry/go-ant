@@ -2,30 +2,48 @@ package langton
 
 import (
 	"image"
+	"image/color"
+	"math"
 
 	"github.com/lucasb-eyer/go-colorful"
 )
 
-func ToImage(ant *Ant, pallete []colorful.Color) image.Image {
+func ToPalette(palette []colorful.Color) color.Palette {
+	colorPalette := make(color.Palette, len(palette)+1)
+	colorPalette[0] = color.Alpha{}
+	for i := range palette {
+
+		r, g, b := palette[i].RGB255()
+
+		_, _, _, a := palette[i].RGBA()
+		colorPalette[i+1] = color.RGBA{
+			R: r,
+			G: g,
+			B: b,
+			A: uint8(math.Sqrt(float64(a))),
+		}
+	}
+	return colorPalette
+}
+
+func ToImage(ant *Ant, palette color.Palette) *image.Paletted {
 
 	r := image.Rect(
-		int(ant.Dimensions.BottomLeft.X),
-		int(ant.Dimensions.BottomLeft.Y),
-		int(ant.Dimensions.TopRight.X),
-		int(ant.Dimensions.TopRight.Y),
+		0,
+		0,
+		int(ant.Dimensions.width),
+		int(ant.Dimensions.height),
 	)
-
-	img := image.NewNRGBA(r)
+	img := image.NewPaletted(r, palette)
 	for i := range ant.Cells {
 		if ant.Cells[i].Step.Action == ActionNone {
 			continue
 		}
-		color := pallete[ant.Cells[i].Step.Index]
 
-		img.Set(
-			int(ant.Cells[i].X),
-			int(ant.Cells[i].Y),
-			color,
+		img.SetColorIndex(
+			int(ant.Cells[i].X+ant.Dimensions.width/2),
+			int(ant.Cells[i].Y+ant.Dimensions.height/2),
+			uint8(ant.Cells[i].Step.Index+1),
 		)
 	}
 	return img

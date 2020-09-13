@@ -1,6 +1,7 @@
 package langton
 
 import (
+	"image/color"
 	"image/png"
 	"os"
 	"testing"
@@ -11,7 +12,7 @@ import (
 func TestToImage(t *testing.T) {
 	type args struct {
 		ant     *Ant
-		palette []colorful.Color
+		palette color.Palette
 	}
 
 	ant := NewAntFromString(NewBoard(100), "LR")
@@ -35,7 +36,7 @@ func TestToImage(t *testing.T) {
 			name: "Simple",
 			args: args{
 				ant:     ant,
-				palette: palette,
+				palette: ToPalette(palette),
 			},
 		},
 	}
