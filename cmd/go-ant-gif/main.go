@@ -48,7 +48,8 @@ func main() {
 			break
 		}
 
-		img := langton.ToImage(ant, palette)
+		img := langton.ToImage(ant, palette, 20)
+
 		images = append(images, img)
 		delay = append(delay, delayValue)
 		disposal = append(disposal, gif.DisposalNone)

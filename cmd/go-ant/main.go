@@ -159,7 +159,7 @@ func LastPic(ant *langton.Ant, palette []colorful.Color) func() *pixel.Sprite {
 	var (
 		sprite *pixel.Sprite
 	)
-	img := langton.ToImage(ant, langton.ToPalette(palette))
+	img := langton.ToImage(ant, langton.ToPalette(palette), 1)
 	pic := pixel.PictureDataFromImage(img)
 	sprite = pixel.NewSprite(pic, pic.Bounds())
 
@@ -168,7 +168,7 @@ func LastPic(ant *langton.Ant, palette []colorful.Color) func() *pixel.Sprite {
 			return sprite
 		}
 		steps = ant.TotalSteps()
-		img := langton.ToImage(ant, langton.ToPalette(palette))
+		img := langton.ToImage(ant, langton.ToPalette(palette), 1)
 		pic := pixel.PictureDataFromImage(img)
 		sprite = pixel.NewSprite(pic, pic.Bounds())
 		return sprite
@@ -177,7 +177,7 @@ func LastPic(ant *langton.Ant, palette []colorful.Color) func() *pixel.Sprite {
 
 func runWebServer(ant *langton.Ant, palette []colorful.Color) {
 	http.HandleFunc("/pic", func(w http.ResponseWriter, r *http.Request) {
-		img := langton.ToImage(ant, langton.ToPalette(palette))
+		img := langton.ToImage(ant, langton.ToPalette(palette), 1)
 		err := png.Encode(w, img)
 		if err != nil {
 			log.Printf("error encoding picture: %s", err)

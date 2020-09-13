@@ -26,13 +26,13 @@ func ToPalette(palette []colorful.Color) color.Palette {
 	return colorPalette
 }
 
-func ToImage(ant *Ant, palette color.Palette) *image.Paletted {
+func ToImage(ant *Ant, palette color.Palette, cellSize int) *image.Paletted {
 
 	r := image.Rect(
 		0,
 		0,
-		int(ant.Dimensions.width),
-		int(ant.Dimensions.height),
+		int(ant.Dimensions.width)*cellSize,
+		int(ant.Dimensions.height)*cellSize,
 	)
 	img := image.NewPaletted(r, palette)
 	for i := range ant.Cells {
@@ -40,11 +40,15 @@ func ToImage(ant *Ant, palette color.Palette) *image.Paletted {
 			continue
 		}
 
-		img.SetColorIndex(
-			int(ant.Cells[i].X+ant.Dimensions.width/2),
-			int(ant.Cells[i].Y+ant.Dimensions.height/2),
-			uint8(ant.Cells[i].Step.Index+1),
-		)
+		for sx := 0; sx < cellSize; sx++ {
+			for sy := 0; sy < cellSize; sy++ {
+				img.SetColorIndex(
+					int((ant.Cells[i].X+ant.Dimensions.width/2)*int64(cellSize)+int64(sx)),
+					int((ant.Cells[i].Y+ant.Dimensions.height/2)*int64(cellSize)+int64(sy)),
+					uint8(ant.Cells[i].Step.Index+1),
+				)
+			}
+		}
 	}
 	return img
 }
