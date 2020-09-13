@@ -24,6 +24,7 @@ import (
 
 var steps string
 var antSpeed int64
+var gridSize int64
 
 func run() {
 	cfg := pixelgl.WindowConfig{
@@ -44,7 +45,7 @@ func run() {
 	}
 
 	ant := langton.NewAntFromString(
-		langton.NewBoard(1000),
+		langton.NewBoard(gridSize/2),
 		steps)
 
 	go runWebServer(ant, palette)
@@ -148,6 +149,7 @@ func run() {
 func main() {
 	flag.StringVar(&steps, "steps", "LR", "Provide the sequence as L for left and R for right")
 	flag.Int64Var(&antSpeed, "speed", time.Second.Nanoseconds(), "the number of nanoseconds to want between interactions. 0 for no wait")
+	flag.Int64Var(&gridSize, "size", 2000, "Image width_x_height dimensions, Equivalent to grid size")
 	flag.Parse()
 
 	pixelgl.Run(run)
