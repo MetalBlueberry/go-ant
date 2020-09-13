@@ -1,6 +1,19 @@
+# go-ant
 
+go-ant is a tool to play with Langton ant representations. 
 
-# cool patterns
+![awesome.git](pics/awesome.gif)
+![out.git](pics/out.gif)
+
+## go-ant
+
+pixel based app to interactively play with the ant
+
+## go-ant-gif
+
+Easily generate gifs. It is really handly to publish it to a webpage.
+
+### cool patterns
 
 ```bash
 go-ant -speed 1000 -steps RLLLLRRRLLL
