@@ -42,13 +42,14 @@ func main() {
 	}
 
 	for frame := 0; frame < frames; frame++ {
+		log.Printf("frame %d of %d", frame, frames)
 		err := Calculate(ant, updatesPerFrame)
 		if err != nil {
 			log.Printf("Bound reached at step %d, use that value as updates next time or increase image size", ant.TotalSteps())
 			break
 		}
 
-		img := langton.ToImage(ant, palette, 20)
+		img := langton.ToImage(ant, palette, 3)
 
 		images = append(images, img)
 		delay = append(delay, delayValue)
