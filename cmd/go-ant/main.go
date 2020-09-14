@@ -86,13 +86,13 @@ func run() {
 		dt := time.Since(last).Seconds()
 		last = time.Now()
 
-		if win.Pressed(pixelgl.KeyKPAdd) {
+		if win.JustPressed(pixelgl.KeyKPAdd) {
 			antSpeed = antSpeed / 2
 			if antSpeed < 0 {
 				antSpeed = 0
 			}
 		}
-		if win.Pressed(pixelgl.KeyKPSubtract) {
+		if win.JustPressed(pixelgl.KeyKPSubtract) {
 			if antSpeed == 0 {
 				antSpeed++
 			}
@@ -136,7 +136,10 @@ func run() {
 		p.Fprintf(basicTxt, "Real Steps Per Seccond: %d\n", atomic.LoadUint64(&antRealSpeed))
 		p.Fprintf(basicTxt, "Total Steps: %d\n", ant.TotalSteps())
 		fmt.Fprintf(basicTxt, "Framerate: %f\n", 1.0/dt)
-		fmt.Fprint(basicTxt, "Press S to save the current picture")
+		fmt.Fprintln(basicTxt, "Press S to save the current picture")
+		fmt.Fprintln(basicTxt, "+/- to change speed")
+		fmt.Fprintln(basicTxt, "Arrows to move arround")
+		fmt.Fprintln(basicTxt, "Mouse wheel to zoom")
 		win.SetMatrix(pixel.IM)
 		basicTxt.Draw(win, pixel.IM.Moved(win.Bounds().Vertices()[1].Sub(basicTxt.Bounds().Vertices()[1]).Add(screenTextMargin)))
 
