@@ -4,11 +4,14 @@ import (
 	"go-ant/langton"
 	"image"
 	"image/gif"
+	"io"
 	"log"
 	"os"
 	"time"
 
 	"github.com/lucasb-eyer/go-colorful"
+
+	"github.com/schollz/progressbar/v3"
 )
 
 func main() {
@@ -41,10 +44,10 @@ func main() {
 		delayValue = 1
 	}
 
+	bar := progressbar.Default(int64(frames), "Calculating")
 	optimizer := GifFrameOptimizer()
-
 	for frame := 0; frame < frames; frame++ {
-		log.Printf("frame %d of %d", frame, frames)
+		bar.Add(1)
 		err := Calculate(ant, updatesPerFrame)
 		if err != nil {
 			log.Printf("Bound reached at step %d, use that value as updates next time or increase image size", ant.TotalSteps())
@@ -58,19 +61,6 @@ func main() {
 		delay = append(delay, delayValue)
 		disposal = append(disposal, gif.DisposalNone)
 
-		// file, err := os.Create(fmt.Sprintf("out/frame_%d.png", frame))
-		// if err != nil {
-		// 	panic(err)
-		// }
-
-		// err = png.Encode(file, img)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// err = file.Close()
-		// if err != nil {
-		// 	panic(err)
-		// }
 	}
 
 	out := &gif.GIF{
@@ -84,7 +74,8 @@ func main() {
 	}
 	defer file.Close()
 
-	err = gif.EncodeAll(file, out)
+	encodeBar := progressbar.DefaultBytes(-1, "Saving..")
+	err = gif.EncodeAll(io.MultiWriter(file, encodeBar), out)
 	if err != nil {
 		panic(err)
 	}
