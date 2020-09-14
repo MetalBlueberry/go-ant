@@ -25,7 +25,7 @@ func main() {
 
 	var (
 		framesXSeccond  int64 = 40
-		duration              = 10 * time.Second
+		duration              = 20 * time.Second
 		updates               = 271433
 		frames                = int(framesXSeccond * duration.Milliseconds() / 1000)
 		updatesPerFrame       = updates / frames
@@ -41,6 +41,8 @@ func main() {
 		delayValue = 1
 	}
 
+	optimizer := GifFrameOptimizer()
+
 	for frame := 0; frame < frames; frame++ {
 		log.Printf("frame %d of %d", frame, frames)
 		err := Calculate(ant, updatesPerFrame)
@@ -50,6 +52,7 @@ func main() {
 		}
 
 		img := langton.ToImage(ant, palette, 3)
+		optimizer(img)
 
 		images = append(images, img)
 		delay = append(delay, delayValue)
@@ -83,7 +86,6 @@ func main() {
 
 	err = gif.EncodeAll(file, out)
 	if err != nil {
-
 		panic(err)
 	}
 }
@@ -96,4 +98,29 @@ func Calculate(ant *langton.Ant, steps int) error {
 		}
 	}
 	return nil
+}
+
+// GifFrameOptimizer turns repeated pixels to transparent to the final gif size is minimal.
+func GifFrameOptimizer() func(img *image.Paletted) {
+	var currentImage *image.Paletted
+
+	return func(img *image.Paletted) {
+		if currentImage == nil {
+			currentImage = &image.Paletted{}
+			currentImage.Palette = img.Palette
+			currentImage.Rect = img.Rect
+			currentImage.Stride = img.Stride
+			currentImage.Pix = make([]uint8, len(img.Pix))
+			copy(currentImage.Pix, img.Pix)
+			return
+		}
+
+		for i := range img.Pix {
+			if img.Pix[i] == currentImage.Pix[i] {
+				img.Pix[i] = 0
+			} else {
+				currentImage.Pix[i] = img.Pix[i]
+			}
+		}
+	}
 }
