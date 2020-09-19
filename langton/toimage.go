@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/lucasb-eyer/go-colorful"
+	"golang.org/x/image/colornames"
 )
 
 func ToPalette(palette []colorful.Color) color.Palette {
@@ -34,6 +35,7 @@ func ToImage(ant *Ant, palette color.Palette, cellSize int) *image.Paletted {
 		int(ant.Dimensions.width)*cellSize,
 		int(ant.Dimensions.height)*cellSize,
 	)
+	palette = append(palette, colornames.Black, colornames.Red)
 	img := image.NewPaletted(r, palette)
 	for i := range ant.Cells {
 		if ant.Cells[i].Step.Action == ActionNone {
@@ -50,5 +52,43 @@ func ToImage(ant *Ant, palette color.Palette, cellSize int) *image.Paletted {
 			}
 		}
 	}
+
+	black := len(palette) - 2
+	red := len(palette) - 1
+	if cellSize > 5 {
+		cell := ant.Position
+		for sx := 0; sx < cellSize; sx++ {
+			for sy := 0; sy < cellSize; sy++ {
+				radius := cellSize / 2
+				if Distance2From(sx, sy, radius, radius) <= (radius-1)*(radius-1) {
+					var color int
+					switch {
+					case ant.Direction == DirectionLeft && sx < radius && sy == radius:
+						color = red
+					case ant.Direction == DirectionRight && sx > radius && sy == radius:
+						color = red
+					case ant.Direction == DirectionTop && sx == radius && sy > radius:
+						color = red
+					case ant.Direction == DirectionDown && sx == radius && sy < radius:
+						color = red
+					default:
+						color = black
+					}
+
+					img.SetColorIndex(
+						int((cell.X+ant.Dimensions.width/2)*int64(cellSize)+int64(sx)),
+						int((cell.Y+ant.Dimensions.height/2)*int64(cellSize)+int64(sy)),
+						uint8(color),
+					)
+				}
+			}
+		}
+	}
 	return img
+}
+
+func Distance2From(ax, ay, bx, by int) int {
+	x := bx - ax
+	y := by - ay
+	return x*x + y*y
 }

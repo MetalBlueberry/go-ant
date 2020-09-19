@@ -15,7 +15,7 @@ func TestToImage(t *testing.T) {
 		palette color.Palette
 	}
 
-	ant := NewAntFromString(NewBoard(100), "LR")
+	ant := NewAntFromString(NewBoard(10), "LR")
 	for {
 		_, err := ant.Next()
 		if err != nil {
@@ -42,7 +42,7 @@ func TestToImage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ToImage(tt.args.ant, tt.args.palette)
+			got := ToImage(tt.args.ant, tt.args.palette, 9)
 			file, err := os.Create("pic.png")
 			if err != nil {
 				panic(err)
