@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"go-ant/langton"
 	"image/png"
+	"io/ioutil"
 	"log"
 	"math"
-	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"sync/atomic"
@@ -28,6 +29,7 @@ import (
 var steps string
 var antSpeed int64
 var gridSize int64
+var pixelSize int
 
 func run() {
 	cfg := pixelgl.WindowConfig{
@@ -48,8 +50,6 @@ func run() {
 	ant := langton.NewAntFromString(
 		langton.NewBoard(gridSize/2),
 		steps)
-
-	go runWebServer(ant, palette)
 
 	var (
 		camPos                  = pixel.ZV
@@ -79,6 +79,7 @@ func run() {
 			_, err := ant.Next()
 			if err != nil {
 				<-time.After(time.Millisecond * 100)
+				continue
 			}
 			atomic.AddUint64(&antStepCount, 1)
 		}
@@ -131,7 +132,35 @@ func run() {
 			camPos.Y += camSpeed * dt / camZoom
 		}
 		if win.JustPressed(pixelgl.KeyS) {
-			browser.OpenURL("http://127.0.0.1:8080/pic")
+			go func() {
+				image := langton.ToImage(ant, langton.ToPalette(palette), pixelSize)
+
+				buf, err := ioutil.TempFile("", "pic")
+				if err != nil {
+					log.Printf("Error: Cannot create tmp file %s", err)
+					return
+				}
+
+				err = png.Encode(buf, image)
+				if err != nil {
+					log.Printf("Error: Cannot encode picture %s", err)
+					return
+				}
+
+				oldname := buf.Name()
+				newname := oldname + ".png"
+				if err := os.Rename(oldname, newname); err != nil {
+					log.Printf("Error: renaming temporary file failed: %v", err)
+					return
+				}
+
+				err = browser.OpenFile(newname)
+				if err != nil {
+					log.Printf("Error: Cannot open browser %s", err)
+					return
+				}
+				log.Print("done")
+			}()
 		}
 
 		if win.JustPressed(pixelgl.KeyG) && !typeEnabled {
@@ -179,9 +208,9 @@ func run() {
 
 		imd.Clear()
 		imd.Color = colornames.Red
-		imd.Push(pixel.V(float64(ant.Dimensions.BottomLeft.X-1), float64(ant.Dimensions.BottomLeft.Y-1)))
-		imd.Push(pixel.V(float64(ant.Dimensions.TopRight.X+1), float64(ant.Dimensions.TopRight.Y+1)))
-		imd.Rectangle(1)
+		imd.Push(pixel.V(float64(ant.Dimensions.BottomLeft.X-1), float64(ant.Dimensions.BottomLeft.Y-1)).Scaled(float64(pixelSize)))
+		imd.Push(pixel.V(float64(ant.Dimensions.TopRight.X+1), float64(ant.Dimensions.TopRight.Y+1)).Scaled(float64(pixelSize)))
+		imd.Rectangle(2)
 		imd.Draw(win)
 
 		basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
@@ -217,7 +246,8 @@ func run() {
 func main() {
 	flag.StringVar(&steps, "steps", "RLLLLRRRLLL", "Provide the sequence as L for left and R for right")
 	flag.Int64Var(&antSpeed, "speed", 10000, "the number of nanoseconds to want between interactions. 0 for no wait")
-	flag.Int64Var(&gridSize, "size", 1000, "Image width_x_height dimensions, Equivalent to grid size")
+	flag.Int64Var(&gridSize, "size", 100, "Image width_x_height dimensions, Equivalent to grid size")
+	flag.IntVar(&pixelSize, "pixel-size", 10, "determines the final image size by multiplying this value by the area")
 	flag.Parse()
 
 	pixelgl.Run(run)
@@ -229,7 +259,7 @@ func LastPic(ant *langton.Ant, palette []colorful.Color) func() *pixel.Sprite {
 	var (
 		sprite *pixel.Sprite
 	)
-	img := langton.ToImage(ant, langton.ToPalette(palette), 1)
+	img := langton.ToImage(ant, langton.ToPalette(palette), pixelSize)
 	pic := pixel.PictureDataFromImage(img)
 	sprite = pixel.NewSprite(pic, pic.Bounds())
 
@@ -238,29 +268,9 @@ func LastPic(ant *langton.Ant, palette []colorful.Color) func() *pixel.Sprite {
 			return sprite
 		}
 		steps = ant.TotalSteps()
-		img := langton.ToImage(ant, langton.ToPalette(palette), 1)
+		img := langton.ToImage(ant, langton.ToPalette(palette), pixelSize)
 		pic := pixel.PictureDataFromImage(img)
 		sprite = pixel.NewSprite(pic, pic.Bounds())
 		return sprite
-	}
-}
-
-func runWebServer(ant *langton.Ant, palette []colorful.Color) {
-	http.HandleFunc("/pic", func(w http.ResponseWriter, r *http.Request) {
-		img := langton.ToImage(ant, langton.ToPalette(palette), 1)
-		err := png.Encode(w, img)
-		if err != nil {
-			log.Printf("error encoding picture: %s", err)
-		}
-		return
-	})
-
-	server := &http.Server{
-		Addr: "0.0.0.0:8080",
-	}
-
-	err := server.ListenAndServe()
-	if err != nil {
-		panic(err)
 	}
 }
