@@ -80,7 +80,7 @@ func main() {
 	optimizer := GifFrameOptimizer()
 	for frame := 0; frame < frames; frame++ {
 		bar.Add(1)
-		err := Calculate(ant, updatesPerFrame)
+		_, err := ant.NextN(updatesPerFrame)
 
 		img := langton.ToImage(ant, palette, pixelSize)
 		optimizer(img)
@@ -118,16 +118,6 @@ func main() {
 	if open {
 		browser.OpenFile(outFile)
 	}
-}
-
-func Calculate(ant *langton.Ant, steps int) error {
-	for i := 0; i < steps; i++ {
-		_, err := ant.Next()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // GifFrameOptimizer turns repeated pixels to transparent to the final gif size is minimal.
