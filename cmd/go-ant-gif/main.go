@@ -81,10 +81,6 @@ func main() {
 	for frame := 0; frame < frames; frame++ {
 		bar.Add(1)
 		err := Calculate(ant, updatesPerFrame)
-		if err != nil {
-			log.Printf("Bound reached at step %d, use that value as updates next time or increase image size", ant.TotalSteps())
-			break
-		}
 
 		img := langton.ToImage(ant, palette, pixelSize)
 		optimizer(img)
@@ -93,6 +89,10 @@ func main() {
 		delay = append(delay, delayBetweenFrames)
 		disposal = append(disposal, gif.DisposalNone)
 
+		if err != nil {
+			log.Printf("Bound reached at step %d, use that value as updates next time or increase image size", ant.TotalSteps())
+			break
+		}
 	}
 
 	// Last frame stays for a seccond
