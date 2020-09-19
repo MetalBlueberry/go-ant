@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"go-ant/langton"
 	"image"
 	"image/gif"
@@ -10,14 +11,40 @@ import (
 	"time"
 
 	"github.com/lucasb-eyer/go-colorful"
+	"github.com/pkg/browser"
 
 	"github.com/schollz/progressbar/v3"
 )
 
 func main() {
-	steps := "RLLLLRRRLLL"
+
+	var (
+		framesXSeccond   int64
+		iterations       int
+		steps            string
+		outFile          string
+		pixelSize        int
+		area             int64
+		durationSecconds int
+	)
+
+	flag.StringVar(&steps, "steps", "LR", "Ant step sequence")
+	flag.StringVar(&outFile, "out", "out.gif", "output file")
+	flag.IntVar(&iterations, "iterations", 271433, "Total number of ant iterations")
+	flag.Int64Var(&framesXSeccond, "frames-x-seccond", 15, "frames per seccond of the final gif")
+	flag.IntVar(&pixelSize, "pixel-size", 3, "determines the final image size by multiplying this value by the area")
+	flag.IntVar(&durationSecconds, "duration", 20, "gif duration in seconds")
+	flag.Int64Var(&area, "area", 130, "size in cells for the ant to walk")
+	flag.Parse()
+
+	var (
+		duration        = time.Duration(durationSecconds) * time.Second
+		frames          = int(framesXSeccond * duration.Milliseconds() / 1000)
+		updatesPerFrame = iterations / frames
+	)
+
 	ant := langton.NewAntFromString(
-		langton.NewBoard(150),
+		langton.NewBoard(area/2),
 		steps,
 	)
 	colorfulPalette, err := colorful.SoftPalette(len(steps))
@@ -25,14 +52,6 @@ func main() {
 		panic(err)
 	}
 	palette := langton.ToPalette(colorfulPalette)
-
-	var (
-		framesXSeccond  int64 = 40
-		duration              = 20 * time.Second
-		updates               = 271433
-		frames                = int(framesXSeccond * duration.Milliseconds() / 1000)
-		updatesPerFrame       = updates / frames
-	)
 
 	images := make([]*image.Paletted, 0, frames) // The successive images.
 	delay := make([]int, 0, frames)
@@ -54,7 +73,7 @@ func main() {
 			break
 		}
 
-		img := langton.ToImage(ant, palette, 3)
+		img := langton.ToImage(ant, palette, pixelSize)
 		optimizer(img)
 
 		images = append(images, img)
@@ -63,12 +82,15 @@ func main() {
 
 	}
 
+	// Last frame stays for a seccond
+	delay[len(delay)-1] = 100
+
 	out := &gif.GIF{
 		Delay:    delay,
 		Image:    images,
 		Disposal: disposal,
 	}
-	file, err := os.Create("out.gif")
+	file, err := os.Create(outFile)
 	if err != nil {
 		panic(err)
 	}
@@ -79,6 +101,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	browser.OpenFile(outFile)
 }
 
 func Calculate(ant *langton.Ant, steps int) error {
