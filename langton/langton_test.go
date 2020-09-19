@@ -114,6 +114,58 @@ func TestDirection_Turn(t *testing.T) {
 	}
 }
 
+func TestDirection_Unturn(t *testing.T) {
+	type args struct {
+		action Action
+	}
+	tests := []struct {
+		name string
+		d    Direction
+		args args
+		want Direction
+	}{
+		{
+			name: "UnturnRight",
+			d:    DirectionTop,
+			args: args{
+				action: ActionTurnRight,
+			},
+			want: DirectionLeft,
+		},
+		{
+			name: "TurnLeft",
+			d:    DirectionTop,
+			args: args{
+				action: ActionTurnLeft,
+			},
+			want: DirectionRight,
+		},
+		{
+			name: "FromLeft TurnRight",
+			d:    DirectionLeft,
+			args: args{
+				action: ActionTurnRight,
+			},
+			want: DirectionDown,
+		},
+		{
+			name: "FromLeft TurnLeft",
+			d:    DirectionLeft,
+			args: args{
+				action: ActionTurnLeft,
+			},
+			want: DirectionTop,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.d.Unturn(tt.args.action); got != tt.want {
+				t.Errorf("Direction.Unturn() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestCell_UpdateNextStep(t *testing.T) {
 	type fields struct {
 		Point Point
@@ -168,6 +220,68 @@ func TestCell_UpdateNextStep(t *testing.T) {
 			cell.UpdateNextStep(tt.args.steps)
 			if steps[tt.expect] != cell.Step {
 				t.Errorf("cell.UpdateNextStep = %v, want %v", cell.Step, steps[tt.expect])
+			}
+		})
+	}
+}
+
+func TestCell_UpdatePreviousStep(t *testing.T) {
+	type fields struct {
+		Point Point
+		Step  Step
+	}
+	type args struct {
+		steps []Step
+	}
+	steps := Steps{
+		Step{
+			Action: ActionTurnLeft,
+		},
+		Step{
+			Action: ActionStraight,
+		},
+		Step{
+			Action: ActionTurnRight,
+		},
+	}
+	steps.Numerate()
+
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		expect int
+	}{
+		{
+			name: "0 to 1",
+			args: args{
+				steps: steps,
+			},
+			fields: fields{
+				Step: steps[0],
+			},
+			expect: 2,
+		},
+		{
+			name: "1 to 0",
+			args: args{
+				steps: steps,
+			},
+			fields: fields{
+				Step: steps[1],
+			},
+			expect: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cell := &Cell{
+				Point: tt.fields.Point,
+				Step:  tt.fields.Step,
+			}
+			cell.UpdatePreviousStep(tt.args.steps)
+			if steps[tt.expect] != cell.Step {
+				t.Errorf("cell.UpdatePreviousStep = %v, want %v", cell.Step, steps[tt.expect])
 			}
 		})
 	}
@@ -351,10 +465,31 @@ func TestAnt_Grow(t *testing.T) {
 				t.Errorf("Ant.Grow() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			obtained := ant.String()
-			t.Log(obtained)
 			if expected != obtained {
 				t.Errorf("Ant.Grow() doesn't keep shape\n%v\nwant\n%v", obtained, expected)
 			}
 		})
+	}
+}
+
+func TestAnt_Grow_And_Walk(t *testing.T) {
+	growAnt := NewAntFromString(
+		NewBoard(1),
+		"LR",
+	)
+	growAnt.NextN(1000)
+	growAnt.Grow(NewBoard(2))
+	growAnt.NextN(1000)
+
+	staticAnt := NewAntFromString(
+		NewBoard(2),
+		"LR",
+	)
+	staticAnt.NextN(1000)
+
+	static := staticAnt.String()
+	grow := growAnt.String()
+	if static != grow {
+		t.Errorf("Ant.Grow() doesn't keep shape\n%v\nwant\n%v", grow, static)
 	}
 }

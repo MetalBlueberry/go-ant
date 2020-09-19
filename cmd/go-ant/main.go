@@ -8,6 +8,8 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"regexp"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -56,6 +58,8 @@ func run() {
 		screenTextMargin        = pixel.V(10, -10)
 		antStepCount     uint64 = 0
 		antRealSpeed     uint64 = 0
+		typeEnabled             = false
+		growTarget              = ""
 	)
 
 	go func() {
@@ -73,7 +77,7 @@ func run() {
 			}
 			_, err := ant.Next()
 			if err != nil {
-				return
+				<-time.After(time.Second)
 			}
 			atomic.AddUint64(&antStepCount, 1)
 		}
@@ -118,6 +122,35 @@ func run() {
 			browser.OpenURL("http://127.0.0.1:8080/pic")
 		}
 
+		if win.JustPressed(pixelgl.KeyG) && !typeEnabled {
+			typeEnabled = true
+			growTarget = ""
+		}
+		if typeEnabled {
+			reg, err := regexp.Compile("[^0-9]")
+			if err != nil {
+				panic(err)
+			}
+			growTarget += reg.ReplaceAllString(win.Typed(), "")
+
+			if win.JustPressed(pixelgl.KeyBackspace) {
+				growTarget = growTarget[0 : len(growTarget)-1]
+			}
+
+			if win.JustPressed(pixelgl.KeyEnter) {
+				typeEnabled = false
+
+				gridSize, err = strconv.ParseInt(growTarget, 10, 64)
+				if err != nil {
+					log.Println("Error: %w", err)
+				}
+				err = ant.Grow(langton.NewBoard(gridSize / 2))
+				if err != nil {
+					log.Println("Error: Cannot grow, %w", err)
+				}
+			}
+		}
+
 		camZoom *= math.Pow(camZoomSpeed, win.MouseScroll().Y)
 
 		cam := pixel.IM.Scaled(camPos, camZoom).Moved(win.Bounds().Center().Sub(camPos))
@@ -137,6 +170,15 @@ func run() {
 		p.Fprintf(basicTxt, "Total Steps: %d\n", ant.TotalSteps())
 		fmt.Fprintf(basicTxt, "Framerate: %f\n", 1.0/dt)
 		fmt.Fprintln(basicTxt, "Press S to save the current picture")
+		if typeEnabled {
+			fmt.Fprintln(basicTxt, "Type new resolution and press Enter")
+			growTargetNumber, _ := strconv.ParseInt(growTarget, 10, 64)
+			fmt.Fprintf(basicTxt, "You typed: %s and it means %d\n", growTarget, growTargetNumber)
+
+		} else {
+			fmt.Fprintln(basicTxt, "Press G to grow the available grid")
+		}
+
 		fmt.Fprintln(basicTxt, "+/- to change speed")
 		fmt.Fprintln(basicTxt, "Arrows to move arround")
 		fmt.Fprintln(basicTxt, "Mouse wheel to zoom")
