@@ -19,29 +19,47 @@ import (
 func main() {
 
 	var (
-		framesXSeccond   int64
-		iterations       int
-		steps            string
-		outFile          string
-		pixelSize        int
-		area             int64
-		durationSecconds int
+		frames          int
+		iterations      int
+		steps           string
+		outFile         string
+		pixelSize       int
+		area            int64
+		durationSeconds int
+		open            bool
+		lastFrameDelay  int
 	)
 
 	flag.StringVar(&steps, "steps", "LR", "Ant step sequence")
 	flag.StringVar(&outFile, "out", "out.gif", "output file")
-	flag.IntVar(&iterations, "iterations", 271433, "Total number of ant iterations")
-	flag.Int64Var(&framesXSeccond, "frames-x-seccond", 15, "frames per seccond of the final gif")
-	flag.IntVar(&pixelSize, "pixel-size", 3, "determines the final image size by multiplying this value by the area")
-	flag.IntVar(&durationSecconds, "duration", 20, "gif duration in seconds")
-	flag.Int64Var(&area, "area", 130, "size in cells for the ant to walk")
+	flag.IntVar(&iterations, "iterations", 10927, "Total number of ant iterations")
+	flag.IntVar(&frames, "frames", 200, "total gif frames")
+	flag.IntVar(&pixelSize, "pixel-size", 6, "determines the final image size by multiplying this value by the area")
+	flag.IntVar(&durationSeconds, "duration", 10, "gif duration in seconds")
+	flag.Int64Var(&area, "area", 70, "size in cells for the ant to walk")
+	flag.BoolVar(&open, "open", false, "open the output in a browser")
+	flag.IntVar(&lastFrameDelay, "last-frame-delay", 1000, "milliseconds for the last frame")
 	flag.Parse()
 
 	var (
-		duration        = time.Duration(durationSecconds) * time.Second
-		frames          = int(framesXSeccond * duration.Milliseconds() / 1000)
-		updatesPerFrame = iterations / frames
+		duration           = time.Duration(durationSeconds) * time.Second
+		updatesPerFrame    = iterations / frames
+		delayBetweenFrames = int(duration.Seconds()) * 100 / frames
 	)
+
+	if updatesPerFrame == 0 {
+		log.Println("WARNING: less than one iteration per frame, increase iterations or reduce frames")
+		log.Println("setting updates per frame to 1")
+		updatesPerFrame = 1
+	}
+
+	if delayBetweenFrames == 0 {
+		log.Print("WARNING: duration is too small for the number of frames, reduce frames or increase duration")
+		log.Println("setting delay between frames to 1")
+		delayBetweenFrames = 1
+	}
+
+	log.Printf("INFO: frame rate %f, updates per frame %d", 100/float64(delayBetweenFrames), updatesPerFrame)
 
 	ant := langton.NewAntFromString(
 		langton.NewBoard(area/2),
@@ -57,12 +75,6 @@ func main() {
 	delay := make([]int, 0, frames)
 	disposal := make([]byte, 0, frames)
 
-	delayValue := int(duration.Seconds()) * 100 / frames
-	if delayValue == 0 {
-		log.Print("WARNING: fps is too high")
-		delayValue = 1
-	}
-
 	bar := progressbar.Default(int64(frames), "Calculating")
 	optimizer := GifFrameOptimizer()
 	for frame := 0; frame < frames; frame++ {
@@ -77,13 +89,13 @@ func main() {
 		optimizer(img)
 
 		images = append(images, img)
-		delay = append(delay, delayValue)
+		delay = append(delay, delayBetweenFrames)
 		disposal = append(disposal, gif.DisposalNone)
 
 	}
 
 	// Last frame stays for a seccond
-	delay[len(delay)-1] = 100
+	delay[len(delay)-1] = lastFrameDelay
 
 	out := &gif.GIF{
 		Delay:    delay,
@@ -102,7 +114,9 @@ func main() {
 		panic(err)
 	}
 
-	browser.OpenFile(outFile)
+	if open {
+		browser.OpenFile(outFile)
+	}
 }
 
 func Calculate(ant *langton.Ant, steps int) error {
