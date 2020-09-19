@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/faiface/pixel"
+	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
 	"github.com/faiface/pixel/text"
 	"github.com/lucasb-eyer/go-colorful"
@@ -84,6 +85,7 @@ func run() {
 	}()
 
 	loadLastPic := LastPic(ant, palette)
+	imd := imdraw.New(nil)
 
 	last := time.Now()
 	for !win.Closed() {
@@ -159,6 +161,13 @@ func run() {
 		win.Clear(colornames.Black)
 
 		loadLastPic().Draw(win, pixel.IM)
+
+		imd.Clear()
+		imd.Color = colornames.Red
+		imd.Push(pixel.V(float64(ant.Dimensions.BottomLeft.X-1), float64(ant.Dimensions.BottomLeft.Y-1)))
+		imd.Push(pixel.V(float64(ant.Dimensions.TopRight.X+1), float64(ant.Dimensions.TopRight.Y+1)))
+		imd.Rectangle(1)
+		imd.Draw(win)
 
 		basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
 		basicTxt := text.New(pixel.V(100, 500), basicAtlas)
