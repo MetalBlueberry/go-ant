@@ -119,16 +119,16 @@ func run() {
 		}
 
 		if win.Pressed(pixelgl.KeyLeft) {
-			camPos.X -= camSpeed * dt
+			camPos.X -= camSpeed * dt / camZoom
 		}
 		if win.Pressed(pixelgl.KeyRight) {
-			camPos.X += camSpeed * dt
+			camPos.X += camSpeed * dt / camZoom
 		}
 		if win.Pressed(pixelgl.KeyDown) {
-			camPos.Y -= camSpeed * dt
+			camPos.Y -= camSpeed * dt / camZoom
 		}
 		if win.Pressed(pixelgl.KeyUp) {
-			camPos.Y += camSpeed * dt
+			camPos.Y += camSpeed * dt / camZoom
 		}
 		if win.JustPressed(pixelgl.KeyS) {
 			browser.OpenURL("http://127.0.0.1:8080/pic")
