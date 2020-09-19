@@ -77,7 +77,7 @@ func run() {
 			}
 			_, err := ant.Next()
 			if err != nil {
-				<-time.After(time.Second)
+				<-time.After(time.Millisecond * 100)
 			}
 			atomic.AddUint64(&antStepCount, 1)
 		}
@@ -165,6 +165,7 @@ func run() {
 
 		p := message.NewPrinter(language.Spanish)
 
+		p.Fprintf(basicTxt, "Grid Size: %s\n", ant.Dimensions)
 		p.Fprintf(basicTxt, "Delay between steps: %s\n", time.Duration(antSpeed))
 		p.Fprintf(basicTxt, "Real Steps Per Seccond: %d\n", atomic.LoadUint64(&antRealSpeed))
 		p.Fprintf(basicTxt, "Total Steps: %d\n", ant.TotalSteps())
@@ -173,7 +174,7 @@ func run() {
 		if typeEnabled {
 			fmt.Fprintln(basicTxt, "Type new resolution and press Enter")
 			growTargetNumber, _ := strconv.ParseInt(growTarget, 10, 64)
-			fmt.Fprintf(basicTxt, "You typed: %s and it means %d\n", growTarget, growTargetNumber)
+			fmt.Fprintf(basicTxt, "new resolution: %d\n", growTargetNumber)
 
 		} else {
 			fmt.Fprintln(basicTxt, "Press G to grow the available grid")

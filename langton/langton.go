@@ -2,6 +2,7 @@ package langton
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -237,6 +238,10 @@ func (dim *Dimensions) IndexOf(p Point) int {
 	x := p.X - dim.BottomLeft.X
 	y := p.Y - dim.BottomLeft.Y
 	return int((x) + (y)*dim.height)
+}
+
+func (dim Dimensions) String() string {
+	return fmt.Sprintf("%dx%d", dim.width, dim.height)
 }
 
 func StepsFromString(steps string) Steps {
