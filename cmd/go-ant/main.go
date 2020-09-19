@@ -85,6 +85,16 @@ func run() {
 	}()
 
 	loadLastPic := LastPic(ant, palette)
+	nextPic := make(chan *pixel.Sprite)
+	lastPic := loadLastPic()
+
+	go func() {
+		for {
+			sprite := loadLastPic()
+			nextPic <- sprite
+		}
+	}()
+
 	imd := imdraw.New(nil)
 
 	last := time.Now()
@@ -160,7 +170,12 @@ func run() {
 
 		win.Clear(colornames.Black)
 
-		loadLastPic().Draw(win, pixel.IM)
+		select {
+		case lastPic = <-nextPic:
+			lastPic.Draw(win, pixel.IM)
+		default:
+			lastPic.Draw(win, pixel.IM)
+		}
 
 		imd.Clear()
 		imd.Color = colornames.Red
