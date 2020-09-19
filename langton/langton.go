@@ -103,6 +103,22 @@ func (ant *Ant) Next() (*Cell, error) {
 	return previousPosition, nil
 }
 
+func (ant *Ant) NextN(steps int) (cell *Cell, err error) {
+	if steps < 0 {
+		panic("steps must be >= 0")
+	}
+	if steps == 0 {
+		return ant.Position, nil
+	}
+	for i := 0; i < steps; i++ {
+		cell, err = ant.Next()
+		if err != nil {
+			return cell, err
+		}
+	}
+	return cell, err
+}
+
 func (cell *Cell) UpdateNextStep(steps []Step) {
 	cell.Step = steps[cell.Step.nextIndex]
 }
@@ -233,36 +249,63 @@ func NewAnt(dimensions Dimensions, steps ...Step) *Ant {
 	}
 }
 
-func (ant *Ant) String() string {
-	minX := ant.Dimensions.BottomLeft.X
-	minY := ant.Dimensions.BottomLeft.Y
-	maxX := ant.Dimensions.TopRight.X
-	maxY := ant.Dimensions.TopRight.Y
+func (ant *Ant) Grow(dimensions Dimensions) error {
+	if ant.Dimensions.height > dimensions.height || ant.Dimensions.width > dimensions.width {
+		return errors.New("New dimensions are smaller than the current dimensions")
+	}
+
+	newCells := make([]Cell, dimensions.size, dimensions.size)
+	for i := range ant.Cells {
+		old := ant.Cells[i]
+		if old.Step.Action == ActionNone {
+			continue
+		}
+		newCells[dimensions.IndexOf(old.Point)] = old
+	}
+	ant.Cells = newCells
+	ant.Dimensions = dimensions
+	ant.Position = &newCells[dimensions.IndexOf(ant.Position.Point)]
+	return nil
+}
+
+func (ant *Ant) StringMargin(margin int64) string {
+	minX := ant.Dimensions.BottomLeft.X - margin
+	minY := ant.Dimensions.BottomLeft.Y - margin
+	maxX := ant.Dimensions.TopRight.X + margin
+	maxY := ant.Dimensions.TopRight.Y + margin
 
 	builder := strings.Builder{}
 	builder.Grow(int((maxX - minX) * (maxY - minY)))
 	for y := maxY; y >= minY; y-- {
 		for x := minX; x <= maxX; x++ {
-			cell := ant.Cells[ant.Dimensions.IndexOf(Point{
+			p := Point{
 				X: x,
 				Y: y,
-			})]
-			if cell.Step.Action != ActionNone {
-				builder.WriteRune(rune(cell.Step.Action))
-			} else {
-				switch {
-				case y == 0:
-					builder.WriteRune('―')
-				case x == 0:
-					builder.WriteRune('|')
-				default:
-					builder.WriteRune('-')
+			}
+			if ant.Dimensions.isPointInside(p) {
+				cell := ant.Cells[ant.Dimensions.IndexOf(p)]
+				if cell.Step.Action != ActionNone {
+					builder.WriteRune(rune(cell.Step.Action))
+					continue
 				}
+			}
+
+			switch {
+			case y == 0:
+				builder.WriteRune('―')
+			case x == 0:
+				builder.WriteRune('|')
+			default:
+				builder.WriteRune('-')
 			}
 		}
 		builder.WriteRune('\n')
 	}
 	return builder.String()
+}
+
+func (ant *Ant) String() string {
+	return ant.StringMargin(0)
 }
 
 func min(a, b int64) int64 {

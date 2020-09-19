@@ -306,3 +306,55 @@ func TestDimensions_IndexOf(t *testing.T) {
 		})
 	}
 }
+
+func TestAnt_Grow(t *testing.T) {
+	type args struct {
+		antSteps    int
+		initialSize int64
+		newSize     int64
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "grow grid by 1",
+			args: args{
+				antSteps:    0,
+				initialSize: 2,
+				newSize:     3,
+			},
+			wantErr: false,
+		},
+		{
+			name: "grow grid by 10 with iterations",
+			args: args{
+				antSteps:    30,
+				initialSize: 5,
+				newSize:     15,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ant := NewAntFromString(
+				NewBoard(tt.args.initialSize),
+				"LR",
+			)
+
+			ant.NextN(tt.args.antSteps)
+
+			expected := ant.StringMargin(tt.args.newSize - tt.args.initialSize)
+			if err := ant.Grow(NewBoard(tt.args.newSize)); (err != nil) != tt.wantErr {
+				t.Errorf("Ant.Grow() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			obtained := ant.String()
+			t.Log(obtained)
+			if expected != obtained {
+				t.Errorf("Ant.Grow() doesn't keep shape\n%v\nwant\n%v", obtained, expected)
+			}
+		})
+	}
+}
