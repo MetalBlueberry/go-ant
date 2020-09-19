@@ -65,13 +65,14 @@ func main() {
 		langton.NewBoard(area/2),
 		steps,
 	)
+
 	colorfulPalette, err := colorful.SoftPalette(len(steps))
 	if err != nil {
 		panic(err)
 	}
 	palette := langton.ToPalette(colorfulPalette)
 
-	images := make([]*image.Paletted, 0, frames) // The successive images.
+	images := make([]*image.Paletted, 0, frames)
 	delay := make([]int, 0, frames)
 	disposal := make([]byte, 0, frames)
 
