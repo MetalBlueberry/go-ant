@@ -1,0 +1,53 @@
+
+LRRLRLLLLLL #Chaotic, pattern, fractal
+LLRRRLRLR #Chaotic, spikes
+RLLLLLLRRRRL #Chaotic, spikes, fill
+
+LRLLRRRRR # Fill, triangles
+LLRLLLRRRRRR # Fill, Triangles, uniform
+LRLRLLLLLLLR # Fill, Triangles, Fractal
+
+LRRLLLLLLLR #Fill, not uniform, travel
+LRRRLLLRLRLL #Fill, uniform, travel
+LRRRLLLRLRR #Fill, uniform, travel
+
+LRRRRLLLRRR #Fill, uniform, symetric, travel
+RLLLLRRRLLL
+
+LRRRRLLLRRRL #Fill, uniform, fibo, travel
+LRRRRLLR #Fill, uniform, travel, chaotic
+LRRRRRRLLR #Fill, uniform, travel, chaotic
+
+LRRLRRLLLLLR # Fill, not uniform, end chaotic
+LLRLRRLLRRRL #Fill, uniform, semi chaotic
+
+LRRLLRLLLLLL #Fill, uniform, Fractal
+
+
+LLRRLRLRLLL #Slow chainsaw grow, end stable
+
+LLRLRLLLLRR # Fill, not uniform, end stable
+
+
+LLLLLLRRLRLL # highway, Triangle
+LLRLRLLLLRLR # highway, Triangle
+LLRRRLRRRLLL # highway, Triangle
+LLRLRLL # highway, Triangle
+
+LLLLRLLLRRLR # highway, Linear
+LLRLRLLRRLL # highway, Linear
+LLRLRRLLLLRR # highway, Linear
+LLRRLLLRLRRR # highway, Linear, The tree!
+
+LRLLRLRLRLLL # highway, Linear, chaotic
+
+LLRLRRLLLLL # highway, semi-fill
+LLRLRRLLLLLL # highway, semi-fill
+
+LLLRLLRRLLLL # highway, fill
+LLRRRLRRRRR # highway, fill, triangles 
+LRLLLRRLRRLR # highway, fill, cracked
+LRLLLRRLLLL # highway, fill, perfect
+
+LLLRRRRRRLLL # Symetric, highlight
+LLRRRRLL # Symetric, highlight
