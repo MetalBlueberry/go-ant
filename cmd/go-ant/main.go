@@ -218,6 +218,7 @@ func run() {
 
 		p := message.NewPrinter(language.Spanish)
 
+		p.Fprintf(basicTxt, "Steps %s\n", steps)
 		p.Fprintf(basicTxt, "Grid Size: %s\n", ant.Dimensions)
 		p.Fprintf(basicTxt, "Delay between steps: %s\n", time.Duration(antSpeed))
 		p.Fprintf(basicTxt, "Real Steps Per Seccond: %d\n", atomic.LoadUint64(&antRealSpeed))
