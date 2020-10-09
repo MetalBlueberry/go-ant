@@ -29,6 +29,13 @@ func (c *Camera) viewportCenter() f64.Vec2 {
 	}
 }
 
+func (c *Camera) Apply(x, y int) (int, int) {
+	wm := c.WorldMatrix()
+
+	mx, my := wm.Apply(float64(x), float64(y))
+	return int(math.Floor(mx)), int(math.Floor(my))
+}
+
 func (c *Camera) WorldMatrix() ebiten.GeoM {
 	m := ebiten.GeoM{}
 	m.Translate(-c.Position[0], -c.Position[1])

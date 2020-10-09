@@ -11,6 +11,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/lucasb-eyer/go-colorful"
 	"golang.org/x/image/math/f64"
 )
@@ -29,14 +30,17 @@ type Game struct {
 }
 
 type properties struct {
-	camSpeed  float64
-	zoomSpeed float64
+	camSpeed       float64
+	zoomSpeed      float64
+	wheelZoomSpeed float64
+	startDrag      image.Point
 }
 
 func defaultProperties() *properties {
 	return &properties{
-		camSpeed:  100.0,
-		zoomSpeed: 1,
+		camSpeed:       100.0,
+		zoomSpeed:      1,
+		wheelZoomSpeed: 0.2,
 	}
 
 }
@@ -60,17 +64,31 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		g.camera.Position[1] += g.properties.camSpeed * delta / g.camera.ZoomFactor
 	}
 
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		g.properties.startDrag = image.Pt(ebiten.CursorPosition()).Div(int(g.camera.ZoomFactor))
+	}
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		next := image.Pt(ebiten.CursorPosition()).Div(int(g.camera.ZoomFactor))
+		target := g.properties.startDrag.Sub(next)
+		g.camera.Position[0] += float64(target.X)
+		g.camera.Position[1] += float64(target.Y)
+		g.properties.startDrag = next
+	}
+
+	_, mouseWheel := ebiten.Wheel()
+	g.camera.ZoomFactor = g.camera.ZoomFactor + g.properties.wheelZoomSpeed*mouseWheel*g.camera.ZoomFactor
+
 	if ebiten.IsKeyPressed(ebiten.KeyQ) {
 		g.camera.ZoomFactor -= g.properties.zoomSpeed * delta * g.camera.ZoomFactor
-		if g.camera.ZoomFactor < 0.1 {
-			g.camera.ZoomFactor = 0.1
-		}
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyE) {
 		g.camera.ZoomFactor += g.properties.zoomSpeed * delta * g.camera.ZoomFactor
-		if g.camera.ZoomFactor > 10 {
-			g.camera.ZoomFactor = 10
-		}
+	}
+	if g.camera.ZoomFactor < 0.1 {
+		g.camera.ZoomFactor = 0.1
+	}
+	if g.camera.ZoomFactor > 10 {
+		g.camera.ZoomFactor = 10
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyR) {
