@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"go-ant/langton"
+	"image"
 	"image/color"
 	"log"
+	"math"
 	"time"
 
 	"github.com/hajimehoshi/ebiten"
@@ -45,11 +47,6 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	delta := time.Since(previous).Seconds()
 	previous = time.Now()
 
-	_, err := g.ant.NextN(100000)
-	if err != nil {
-
-	}
-
 	if ebiten.IsKeyPressed(ebiten.KeyA) || ebiten.IsKeyPressed(ebiten.KeyLeft) {
 		g.camera.Position[0] -= g.properties.camSpeed * delta / g.camera.ZoomFactor
 	}
@@ -64,15 +61,15 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyQ) {
-		g.camera.ZoomFactor -= g.properties.zoomSpeed * delta
+		g.camera.ZoomFactor -= g.properties.zoomSpeed * delta * g.camera.ZoomFactor
 		if g.camera.ZoomFactor < 0.1 {
 			g.camera.ZoomFactor = 0.1
 		}
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyE) {
-		g.camera.ZoomFactor += g.properties.zoomSpeed * delta
-		if g.camera.ZoomFactor > 5 {
-			g.camera.ZoomFactor = 5
+		g.camera.ZoomFactor += g.properties.zoomSpeed * delta * g.camera.ZoomFactor
+		if g.camera.ZoomFactor > 10 {
+			g.camera.ZoomFactor = 10
 		}
 	}
 
@@ -91,19 +88,26 @@ func (g *Game) Update(screen *ebiten.Image) error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	// ant := langton.ToImage(g.ant, g.palette, 1)
-	// img, err := ebiten.NewImageFromImage(ant, ebiten.FilterDefault)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// g.world = img
-	// if g.world == nil {
-	// 	return
-	// }
-	// drawBounds(g.world, 10, colornames.White)
-	// g.camera.Render(g.world, screen)
-	DrawImage(g.ant, screen, g.palette, g.camera.WorldMatrix())
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("TPS: %0.2f\nFPS: %0.2f", ebiten.CurrentTPS(), ebiten.CurrentFPS()))
+	wm := g.camera.WorldMatrix()
+
+	DrawImage(g.ant, screen, g.palette, wm)
+
+	cx, cy := ebiten.CursorPosition()
+	mx, my := wm.Apply(float64(cx), float64(cy))
+
+	cell, _ := g.ant.CellAt(langton.Point{
+		int64(mx),
+		int64(my),
+	})
+
+	ebitenutil.DebugPrint(screen,
+		fmt.Sprintf(
+			"TPS: %0.2f\nFPS: %0.2f\nmouse %s\ncell %s",
+			ebiten.CurrentTPS(),
+			ebiten.CurrentFPS(),
+			image.Pt(int(mx), int(my)),
+			cell,
+		))
 }
 
 func drawBounds(dst *ebiten.Image, size float64, clr color.Color) {
@@ -134,9 +138,9 @@ func main() {
 	ebiten.SetWindowTitle("Hello, World!")
 	ebiten.SetWindowResizable(true)
 	ebiten.SetRunnableOnUnfocused(true)
-	ebiten.SetMaxTPS(25)
+	// ebiten.SetMaxTPS(25)
 
-	sequence := "LLLRLLRRLLLL"
+	sequence := "LR"
 	antGridSize := int64(1000)
 	ant := langton.NewAntFromString(
 		langton.NewBoard(antGridSize),
@@ -148,14 +152,21 @@ func main() {
 		panic(err)
 	}
 
-	// antBoardSize := (float64(ant.Dimensions.Width()) * 1) / 2
+	go func() {
+		for {
+			time.Sleep(time.Millisecond * 200)
+			_, err := ant.NextN(1)
+			if err != nil {
+
+			}
+		}
+	}()
 
 	g := &Game{
 		camera: Camera{
-			ViewPort: f64.Vec2{screenSize, screenSize},
-			// ViewPort: f64.Vec2{float64(ant.Dimensions.Width()), float64(ant.Dimensions.Height())},
-			// Position:   f64.Vec2{antBoardSize - screenSize/2, antBoardSize - screenSize/2},
-			ZoomFactor: 1,
+			ViewPort:   f64.Vec2{screenSize, screenSize},
+			Position:   f64.Vec2{-screenSize / 2, -screenSize / 2},
+			ZoomFactor: 5,
 		},
 		ant:        ant,
 		palette:    langton.ToPalette(p),
@@ -171,6 +182,8 @@ func DrawImage(ant *langton.Ant, screen *ebiten.Image, palette color.Palette, ge
 	for sx := 0; sx < bounds.Dx(); sx++ {
 		for sy := 0; sy < bounds.Dy(); sy++ {
 			x, y := geo.Apply(float64(sx), float64(sy))
+			x = math.Floor(x)
+			y = math.Floor(y)
 			cell, err := ant.CellAt(langton.Point{int64(x), int64(y)})
 			if err != nil {
 				continue
