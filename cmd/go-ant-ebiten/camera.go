@@ -66,10 +66,3 @@ func (c *Camera) ScreenToWorld(posX, posY int) (float64, float64) {
 		return math.NaN(), math.NaN()
 	}
 }
-
-func (c *Camera) Reset() {
-	c.Position[0] = 0
-	c.Position[1] = 0
-	c.Rotation = 0
-	c.ZoomFactor = 0
-}

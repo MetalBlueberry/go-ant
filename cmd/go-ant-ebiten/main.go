@@ -34,6 +34,9 @@ type properties struct {
 	zoomSpeed      float64
 	wheelZoomSpeed float64
 	startDrag      image.Point
+
+	antStepsPerSeccond float64
+	antPendingSteps    float64
 }
 
 func defaultProperties() *properties {
@@ -41,6 +44,8 @@ func defaultProperties() *properties {
 		camSpeed:       100.0,
 		zoomSpeed:      1,
 		wheelZoomSpeed: 5,
+
+		antStepsPerSeccond: 1,
 	}
 
 }
@@ -48,6 +53,10 @@ func defaultProperties() *properties {
 var previous time.Time
 
 func (g *Game) Update(screen *ebiten.Image) error {
+	if previous.IsZero() {
+		previous = time.Now()
+		return nil
+	}
 	delta := time.Since(previous).Seconds()
 	previous = time.Now()
 
@@ -65,13 +74,14 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	}
 
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		g.properties.startDrag = image.Pt(ebiten.CursorPosition()).Div(int(g.camera.ZoomFactor))
+		g.properties.startDrag = image.Pt(ebiten.CursorPosition())
+
 	}
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-		next := image.Pt(ebiten.CursorPosition()).Div(int(g.camera.ZoomFactor))
+		next := image.Pt(ebiten.CursorPosition())
 		target := g.properties.startDrag.Sub(next)
-		g.camera.Position[0] += float64(target.X)
-		g.camera.Position[1] += float64(target.Y)
+		g.camera.Position[0] += float64(target.X) / g.camera.ZoomFactor
+		g.camera.Position[1] += float64(target.Y) / g.camera.ZoomFactor
 		g.properties.startDrag = next
 	}
 
@@ -104,11 +114,17 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		g.camera.Rotation -= 1
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeySpace) {
-		g.camera.Reset()
+	if ebiten.IsKeyPressed(ebiten.KeyKPAdd) {
+		g.properties.antStepsPerSeccond *= 1.3 * (1 + delta)
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyKPSubtract) {
+		g.properties.antStepsPerSeccond /= 1.3 * (1 + delta)
 	}
 
-	_, err := g.ant.NextN(1000)
+	g.properties.antPendingSteps += g.properties.antStepsPerSeccond * delta
+	steps := math.Floor(g.properties.antPendingSteps)
+	g.properties.antPendingSteps = g.properties.antPendingSteps - steps
+	_, err := g.ant.NextN(int(steps))
 	if err != nil {
 	}
 	return nil
@@ -131,11 +147,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	ebitenutil.DebugPrint(screen,
 		fmt.Sprintf(
-			"TPS: %0.2f\nFPS: %0.2f\nmouse %s\ncell %s",
+			`TPS: %0.2f
+FPS: %0.2f
+mouse %s
+cell %s
+Steps x Seccond %.2f`,
 			ebiten.CurrentTPS(),
 			ebiten.CurrentFPS(),
 			image.Pt(int(mx), int(my)),
 			cell,
+			g.properties.antStepsPerSeccond,
 		))
 }
 
