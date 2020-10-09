@@ -1,6 +1,6 @@
 # go-ant
 
-go-ant is a tool to play with Langton ant representations. 
+go-ant is a tool to play with Langton Ant representations.
 
 ![awesome.git](pics/awesome.gif)
 ![out.git](pics/out.gif)
