@@ -133,7 +133,7 @@ func (g *Game) Update(screen *ebiten.Image) error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	wm := g.camera.WorldMatrix()
 
-	DrawImage(g.ant, screen, g.palette, wm)
+	g.camera.DrawAnt(g.ant, screen, g.palette)
 
 	cx, cy := ebiten.CursorPosition()
 	mx, my := wm.Apply(float64(cx), float64(cy))
@@ -218,19 +218,6 @@ func main() {
 }
 
 func DrawImage(ant *langton.Ant, screen *ebiten.Image, palette color.Palette, geo ebiten.GeoM) {
-	bounds := screen.Bounds()
-	for sx := 0; sx < bounds.Dx(); sx++ {
-		for sy := 0; sy < bounds.Dy(); sy++ {
-			x, y := geo.Apply(float64(sx), float64(sy))
-			x = math.Floor(x)
-			y = math.Floor(y)
-			cell, err := ant.CellAt(langton.Point{int64(x), int64(y)})
-			if err != nil {
-				continue
-			}
-			screen.Set(sx, sy, palette[cell.Step.Index+1])
-		}
-	}
 	// for i := range ant.Cells {
 	// 	if ant.Cells[i].Step.Action == langton.ActionNone {
 	// 		continue
