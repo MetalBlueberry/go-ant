@@ -40,7 +40,7 @@ func defaultProperties() *properties {
 	return &properties{
 		camSpeed:       100.0,
 		zoomSpeed:      1,
-		wheelZoomSpeed: 0.2,
+		wheelZoomSpeed: 5,
 	}
 
 }
@@ -76,7 +76,12 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	}
 
 	_, mouseWheel := ebiten.Wheel()
-	g.camera.ZoomFactor = g.camera.ZoomFactor + g.properties.wheelZoomSpeed*mouseWheel*g.camera.ZoomFactor
+	if mouseWheel > 0 {
+		g.camera.ZoomFactor += g.properties.wheelZoomSpeed * delta * g.camera.ZoomFactor
+	}
+	if mouseWheel < 0 {
+		g.camera.ZoomFactor -= g.properties.wheelZoomSpeed * delta * g.camera.ZoomFactor
+	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyQ) {
 		g.camera.ZoomFactor -= g.properties.zoomSpeed * delta * g.camera.ZoomFactor
