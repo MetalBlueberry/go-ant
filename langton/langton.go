@@ -154,6 +154,43 @@ func (cell *Cell) UpdatePreviousStep(steps []Step) {
 	cell.Step = steps[cell.Step.previousIndex]
 }
 
+func (cell *Cell) String() string {
+	return fmt.Sprintf(
+		"%s, %s",
+		cell.Point,
+		cell.Step,
+	)
+}
+
+func (point Point) String() string {
+	return fmt.Sprintf(
+		"(X: %d, Y: %d)",
+		point.X,
+		point.Y,
+	)
+}
+
+func (step Step) String() string {
+	return fmt.Sprintf(
+		"%d: %s",
+		step.Index,
+		step.Action,
+	)
+}
+
+func (action Action) String() string {
+	switch action {
+	case ActionTurnLeft:
+		return "Left"
+	case ActionTurnRight:
+		return "Right"
+	case ActionStraight:
+		return "Straight"
+	default:
+		return "Unknown"
+	}
+}
+
 func (point Point) Walk(direction Direction) Point {
 	switch direction {
 	case DirectionTop:

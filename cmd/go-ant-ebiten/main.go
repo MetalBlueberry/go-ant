@@ -84,6 +84,10 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	if ebiten.IsKeyPressed(ebiten.KeySpace) {
 		g.camera.Reset()
 	}
+
+	_, err := g.ant.NextN(1000)
+	if err != nil {
+	}
 	return nil
 }
 
@@ -94,6 +98,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	cx, cy := ebiten.CursorPosition()
 	mx, my := wm.Apply(float64(cx), float64(cy))
+	mx = math.Floor(mx)
+	my = math.Floor(my)
 
 	cell, _ := g.ant.CellAt(langton.Point{
 		int64(mx),
@@ -140,8 +146,8 @@ func main() {
 	ebiten.SetRunnableOnUnfocused(true)
 	// ebiten.SetMaxTPS(25)
 
-	sequence := "LR"
-	antGridSize := int64(1000)
+	sequence := "LLLRRRRRRLLL"
+	antGridSize := int64(500)
 	ant := langton.NewAntFromString(
 		langton.NewBoard(antGridSize),
 		sequence,
@@ -151,16 +157,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	go func() {
-		for {
-			time.Sleep(time.Millisecond * 200)
-			_, err := ant.NextN(1)
-			if err != nil {
-
-			}
-		}
-	}()
 
 	g := &Game{
 		camera: Camera{
