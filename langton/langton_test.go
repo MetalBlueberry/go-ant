@@ -412,7 +412,7 @@ func TestDimensions_IndexOf(t *testing.T) {
 				BottomLeft: tt.fields.BottomLeft,
 				width:      tt.fields.width,
 				height:     tt.fields.height,
-				size:       tt.fields.size,
+				Size:       tt.fields.Size,
 			}
 			if got := dim.IndexOf(tt.args.p); got != tt.want {
 				t.Errorf("Dimensions.IndexOf() = %v, want %v", got, tt.want)

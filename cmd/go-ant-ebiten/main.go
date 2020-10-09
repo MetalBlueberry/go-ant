@@ -10,25 +10,34 @@ import (
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/lucasb-eyer/go-colorful"
-	"golang.org/x/image/colornames"
 	"golang.org/x/image/math/f64"
 )
 
 const (
-	screenSize = 300
+	screenSize = 600
 )
 
 type Game struct {
-	ant    *langton.Ant
-	palete color.Palette
-	camera Camera
-	world  *ebiten.Image
+	ant     *langton.Ant
+	palette color.Palette
+	camera  Camera
+	world   *ebiten.Image
+
+	properties *properties
 }
 
-var (
-	camSpeed  float64 = 100.0
-	zoomSpeed float64 = 1
-)
+type properties struct {
+	camSpeed  float64
+	zoomSpeed float64
+}
+
+func defaultProperties() *properties {
+	return &properties{
+		camSpeed:  100.0,
+		zoomSpeed: 1,
+	}
+
+}
 
 var previous time.Time
 
@@ -36,36 +45,32 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	delta := time.Since(previous).Seconds()
 	previous = time.Now()
 
-	_, err := g.ant.NextN(10000)
+	_, err := g.ant.NextN(100000)
 	if err != nil {
 
 	}
 
-	// screen.Fill(color.RGBA{0xff, 0, 0, 0xff})
-	// bounds := screen.Bounds()
-	// ebitenutil.DrawRect(screen, float64(bounds.Min.X), float64(bounds.Min.Y), float64(bounds.Dx()), float64(bounds.Dy()), colornames.Blue)
-	// ebitenutil.DebugPrint(screen, bounds.String())
 	if ebiten.IsKeyPressed(ebiten.KeyA) || ebiten.IsKeyPressed(ebiten.KeyLeft) {
-		g.camera.Position[0] -= camSpeed * delta / g.camera.ZoomFactor
+		g.camera.Position[0] -= g.properties.camSpeed * delta / g.camera.ZoomFactor
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyD) || ebiten.IsKeyPressed(ebiten.KeyRight) {
-		g.camera.Position[0] += camSpeed * delta / g.camera.ZoomFactor
+		g.camera.Position[0] += g.properties.camSpeed * delta / g.camera.ZoomFactor
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyW) || ebiten.IsKeyPressed(ebiten.KeyUp) {
-		g.camera.Position[1] -= camSpeed * delta / g.camera.ZoomFactor
+		g.camera.Position[1] -= g.properties.camSpeed * delta / g.camera.ZoomFactor
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyS) || ebiten.IsKeyPressed(ebiten.KeyDown) {
-		g.camera.Position[1] += camSpeed * delta / g.camera.ZoomFactor
+		g.camera.Position[1] += g.properties.camSpeed * delta / g.camera.ZoomFactor
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyQ) {
-		g.camera.ZoomFactor -= zoomSpeed * delta
+		g.camera.ZoomFactor -= g.properties.zoomSpeed * delta
 		if g.camera.ZoomFactor < 0.1 {
 			g.camera.ZoomFactor = 0.1
 		}
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyE) {
-		g.camera.ZoomFactor += zoomSpeed * delta
+		g.camera.ZoomFactor += g.properties.zoomSpeed * delta
 		if g.camera.ZoomFactor > 5 {
 			g.camera.ZoomFactor = 5
 		}
@@ -75,28 +80,29 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		g.camera.Rotation += 1
 	}
 
+	if ebiten.IsKeyPressed(ebiten.KeyF) {
+		g.camera.Rotation -= 1
+	}
+
 	if ebiten.IsKeyPressed(ebiten.KeySpace) {
 		g.camera.Reset()
 	}
-	ant := langton.ToImage(g.ant, g.palete, 1)
-	img, err := ebiten.NewImageFromImage(ant, ebiten.FilterDefault)
-	if err != nil {
-		return err
-	}
-	g.world = img
-	// scale := float64(screen.Bounds().Dx()) / float64(img.Bounds().Dx())
-	// g.world.DrawImage(img, &ebiten.DrawImageOptions{
-	// 	GeoM: ebiten.ScaleGeo(scale, scale),
-	// })
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	if g.world == nil {
-		return
-	}
-	drawBounds(g.world, 10, colornames.White)
-	g.camera.Render(g.world, screen)
+	// ant := langton.ToImage(g.ant, g.palette, 1)
+	// img, err := ebiten.NewImageFromImage(ant, ebiten.FilterDefault)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// g.world = img
+	// if g.world == nil {
+	// 	return
+	// }
+	// drawBounds(g.world, 10, colornames.White)
+	// g.camera.Render(g.world, screen)
+	DrawImage(g.ant, screen, g.palette, g.camera.WorldMatrix())
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("TPS: %0.2f\nFPS: %0.2f", ebiten.CurrentTPS(), ebiten.CurrentFPS()))
 }
 
@@ -130,7 +136,7 @@ func main() {
 	ebiten.SetRunnableOnUnfocused(true)
 	ebiten.SetMaxTPS(25)
 
-	sequence := "LLLRRRRRRLLL"
+	sequence := "LLLRLLRRLLLL"
 	antGridSize := int64(1000)
 	ant := langton.NewAntFromString(
 		langton.NewBoard(antGridSize),
@@ -142,25 +148,94 @@ func main() {
 		panic(err)
 	}
 
-	antBoardSize := (float64(ant.Dimensions.Width()) * 1) / 2
+	// antBoardSize := (float64(ant.Dimensions.Width()) * 1) / 2
 
 	g := &Game{
-		// canvas: image.NewRGBA(image.Rect(0, 0, screenSize, screenSize)),
 		camera: Camera{
-			ViewPort:   f64.Vec2{screenSize, screenSize},
-			Position:   f64.Vec2{antBoardSize - screenSize/2, antBoardSize - screenSize/2},
+			ViewPort: f64.Vec2{screenSize, screenSize},
+			// ViewPort: f64.Vec2{float64(ant.Dimensions.Width()), float64(ant.Dimensions.Height())},
+			// Position:   f64.Vec2{antBoardSize - screenSize/2, antBoardSize - screenSize/2},
 			ZoomFactor: 1,
 		},
-		ant:    ant,
-		palete: langton.ToPalette(p),
+		ant:        ant,
+		palette:    langton.ToPalette(p),
+		properties: defaultProperties(),
 	}
-	// world, err := ebiten.NewImage(screenSize, screenHeight, ebiten.FilterDefault)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// g.world = world
-
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func DrawImage(ant *langton.Ant, screen *ebiten.Image, palette color.Palette, geo ebiten.GeoM) {
+	bounds := screen.Bounds()
+	for sx := 0; sx < bounds.Dx(); sx++ {
+		for sy := 0; sy < bounds.Dy(); sy++ {
+			x, y := geo.Apply(float64(sx), float64(sy))
+			cell, err := ant.CellAt(langton.Point{int64(x), int64(y)})
+			if err != nil {
+				continue
+			}
+			screen.Set(sx, sy, palette[cell.Step.Index+1])
+		}
+	}
+	// for i := range ant.Cells {
+	// 	if ant.Cells[i].Step.Action == langton.ActionNone {
+	// 		continue
+	// 	}
+
+	// 	x, y := geo.Apply(
+	// 		// float64(sx),
+	// 		// float64(sy),
+	// 		float64(ant.Cells[i].X),
+	// 		float64(ant.Cells[i].Y),
+	// 	)
+	// 	p := image.Pt(int(x), int(y))
+	// 	if p.In(screen.Bounds()) {
+	// 		screen.Set(
+	// 			// int(ant.Cells[i].X),
+	// 			// int(ant.Cells[i].Y),
+	// 			int(x),
+	// 			int(y),
+	// 			// int((ant.Cells[i].X+ant.Dimensions.Width()/2)*int64(cellSize)+int64(sx)),
+	// 			// int((ant.Cells[i].Y+ant.Dimensions.Height()/2)*int64(cellSize)+int64(sy)),
+	// 			palette[ant.Cells[i].Step.Index+1],
+	// 		)
+	// 	}
+	// }
+
+	// if cellSize > 5 {
+	// 	cell := ant.Position
+	// 	for sx := 0; sx < cellSize; sx++ {
+	// 		for sy := 0; sy < cellSize; sy++ {
+	// 			radius := cellSize / 2
+	// 			if distance2From(sx, sy, radius, radius) <= (radius-1)*(radius-1) {
+	// 				var color color.Color
+	// 				switch {
+	// 				case ant.Direction == langton.DirectionLeft && sx < radius && sy == radius:
+	// 					color = colornames.Red
+	// 				case ant.Direction == langton.DirectionRight && sx > radius && sy == radius:
+	// 					color = colornames.Red
+	// 				case ant.Direction == langton.DirectionTop && sx == radius && sy > radius:
+	// 					color = colornames.Red
+	// 				case ant.Direction == langton.DirectionDown && sx == radius && sy < radius:
+	// 					color = colornames.Red
+	// 				default:
+	// 					color = colornames.Black
+	// 				}
+
+	// 				screen.Set(
+	// 					int((cell.X+ant.Dimensions.Width()/2)*int64(cellSize)+int64(sx)),
+	// 					int((cell.Y+ant.Dimensions.Height()/2)*int64(cellSize)+int64(sy)),
+	// 					color,
+	// 				)
+	// 			}
+	// 		}
+	// 	}
+	// }
+}
+
+func distance2From(ax, ay, bx, by int) int {
+	x := bx - ax
+	y := by - ay
+	return x*x + y*y
 }

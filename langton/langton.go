@@ -24,7 +24,7 @@ type Dimensions struct {
 
 	width  int64
 	height int64
-	size   int64
+	Size   int64
 }
 
 type Point struct {
@@ -169,6 +169,18 @@ func (point Point) Walk(direction Direction) Point {
 	return point
 }
 
+func (ant *Ant) CellAt(position Point) (*Cell, error) {
+	if !ant.Dimensions.isPointInside(position) {
+		return nil, errors.New("Next step is out of bounds")
+	}
+	posIndex := ant.Dimensions.IndexOf(position)
+	cell := &ant.Cells[posIndex]
+	if cell.Step.Action == ActionNone {
+		return nil, errors.New("Cell not initialized")
+	}
+	return cell, nil
+}
+
 func (ant *Ant) EnsureCellAt(position Point) (*Cell, error) {
 	if !ant.Dimensions.isPointInside(position) {
 		return nil, errors.New("Next step is out of bounds")
@@ -217,7 +229,7 @@ func NewDimensions(minX, minY, maxX, maxY int64) Dimensions {
 func (dim *Dimensions) Init() {
 	dim.height = dim.TopRight.X - dim.BottomLeft.X + 1
 	dim.width = dim.TopRight.Y - dim.BottomLeft.Y + 1
-	dim.size = dim.height * dim.width
+	dim.Size = dim.height * dim.width
 }
 
 func (dim *Dimensions) Center() Point {
@@ -225,6 +237,14 @@ func (dim *Dimensions) Center() Point {
 		X: (dim.BottomLeft.X + dim.TopRight.X) / 2,
 		Y: (dim.BottomLeft.Y + dim.TopRight.Y) / 2,
 	}
+}
+
+func (dim *Dimensions) Width() int64 {
+	return dim.width
+}
+
+func (dim *Dimensions) Height() int64 {
+	return dim.height
 }
 
 func (dim Dimensions) isPointInside(p Point) bool {
@@ -273,7 +293,7 @@ func NewAnt(dimensions Dimensions, steps ...Step) *Ant {
 
 	Steps(steps).Numerate()
 
-	cells := make([]Cell, dimensions.size, dimensions.size)
+	cells := make([]Cell, dimensions.Size, dimensions.Size)
 	cell := &cells[dimensions.IndexOf(dimensions.Center())]
 	cell.Point = dimensions.Center()
 	cell.Step = steps[0]
@@ -291,7 +311,7 @@ func (ant *Ant) Grow(dimensions Dimensions) error {
 		return errors.New("New dimensions are equal or smaller than the current dimensions")
 	}
 
-	newCells := make([]Cell, dimensions.size, dimensions.size)
+	newCells := make([]Cell, dimensions.Size, dimensions.Size)
 	for i := range ant.Cells {
 		old := ant.Cells[i]
 		if old.Step.Action == ActionNone {

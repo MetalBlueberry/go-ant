@@ -29,7 +29,7 @@ func (c *Camera) viewportCenter() f64.Vec2 {
 	}
 }
 
-func (c *Camera) worldMatrix() ebiten.GeoM {
+func (c *Camera) WorldMatrix() ebiten.GeoM {
 	m := ebiten.GeoM{}
 	m.Translate(-c.Position[0], -c.Position[1])
 	// We want to scale and rotate around center of image / screen
@@ -40,17 +40,18 @@ func (c *Camera) worldMatrix() ebiten.GeoM {
 	)
 	m.Rotate(float64(c.Rotation) * 2 * math.Pi / 360)
 	m.Translate(c.viewportCenter()[0], c.viewportCenter()[1])
+	m.Invert()
 	return m
 }
 
 func (c *Camera) Render(world, screen *ebiten.Image) error {
 	return screen.DrawImage(world, &ebiten.DrawImageOptions{
-		GeoM: c.worldMatrix(),
+		GeoM: c.WorldMatrix(),
 	})
 }
 
 func (c *Camera) ScreenToWorld(posX, posY int) (float64, float64) {
-	inverseMatrix := c.worldMatrix()
+	inverseMatrix := c.WorldMatrix()
 	if inverseMatrix.IsInvertible() {
 		inverseMatrix.Invert()
 		return inverseMatrix.Apply(float64(posX), float64(posY))
