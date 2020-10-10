@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"go-ant/langton"
 	"image"
 	"image/color"
@@ -14,6 +13,7 @@ import (
 	"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/lucasb-eyer/go-colorful"
 	"golang.org/x/image/math/f64"
+	"golang.org/x/text/message"
 )
 
 const (
@@ -27,6 +27,7 @@ type Game struct {
 	world   *ebiten.Image
 
 	properties *properties
+	printer    *message.Printer
 }
 
 type properties struct {
@@ -135,19 +136,19 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		if len(g.properties.nextSequence) != 0 {
 			g.properties.sequence = g.properties.nextSequence
 			g.properties.nextSequence = ""
-
-			antGridSize := int64(1000)
-			g.ant = langton.NewAntFromString(
-				langton.NewBoard(antGridSize),
-				g.properties.sequence,
-			)
-
-			p, err := colorful.HappyPalette(len(g.properties.sequence))
-			if err != nil {
-				panic(err)
-			}
-			g.palette = langton.ToPalette(p)
 		}
+
+		antGridSize := int64(1000)
+		g.ant = langton.NewAntFromString(
+			langton.NewBoard(antGridSize),
+			g.properties.sequence,
+		)
+
+		p, err := colorful.HappyPalette(len(g.properties.sequence))
+		if err != nil {
+			panic(err)
+		}
+		g.palette = langton.ToPalette(p)
 	}
 
 	g.properties.antPendingSteps += g.properties.antStepsPerSeccond * delta
@@ -184,21 +185,21 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	})
 
 	screen.DrawImage(tmp, &ebiten.DrawImageOptions{})
+
 	ebitenutil.DebugPrint(screen,
-		fmt.Sprintf(
-			`TPS: %0.2f
-FPS: %0.2f
-mouse %s
-cell %s
-Steps x Seccond %.2f
-Sequence %s
-Press enter to play sequence %s`,
+		g.printer.Sprintf(
+			`TPS: %0.2f - FPS: %0.2f
+Cell %s
+Now playing "%s"
+Steps x Seccond %0.2f
+Total Steps %d,
+Type sequence with LR and press Enter to play: "%s"`,
 			ebiten.CurrentTPS(),
 			ebiten.CurrentFPS(),
-			image.Pt(int(mx), int(my)),
 			cell,
-			g.properties.antStepsPerSeccond,
 			g.properties.sequence,
+			g.properties.antStepsPerSeccond,
+			g.ant.TotalSteps(),
 			g.properties.nextSequence,
 		))
 }
@@ -253,6 +254,8 @@ func main() {
 		ant:        ant,
 		palette:    langton.ToPalette(p),
 		properties: defaultProperties(),
+
+		printer: message.NewPrinter(message.MatchLanguage("en")),
 	}
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
