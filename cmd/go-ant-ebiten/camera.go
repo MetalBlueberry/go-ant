@@ -7,6 +7,7 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten"
+	"golang.org/x/image/colornames"
 	"golang.org/x/image/math/f64"
 )
 
@@ -81,4 +82,42 @@ func (c *Camera) DrawAnt(ant *langton.Ant, screen *ebiten.Image, palette color.P
 			screen.Set(sx, sy, palette[cell.Step.Index+1])
 		}
 	}
+	cell := ant.Position
+	antx, anty := c.ScreenToWorld(int(cell.X), int(cell.Y))
+	antmaxx, antmaxy := c.ScreenToWorld(int(cell.X)+1, int(cell.Y)+1)
+	antCenterX := math.Ceil((antx + antmaxx) / 2)
+	antCenterY := math.Ceil((anty + antmaxy) / 2)
+
+	antSize := (antmaxx - antx) * 0.9
+	if antSize >= 4 {
+		for x := math.Floor(antx); x < antmaxx; x++ {
+			for y := math.Floor(anty); y < antmaxy; y++ {
+				if distance2From(x, y, antCenterX, antCenterY) < antSize {
+					var color color.Color
+					switch {
+					case ant.Direction == langton.DirectionLeft && x < antCenterX && y == antCenterY:
+						color = colornames.Red
+					case ant.Direction == langton.DirectionRight && x > antCenterX && y == antCenterY:
+						color = colornames.Red
+					case ant.Direction == langton.DirectionTop && x == antCenterX && y > antCenterY:
+						color = colornames.Red
+					case ant.Direction == langton.DirectionDown && x == antCenterX && y < antCenterY:
+						color = colornames.Red
+					default:
+						color = colornames.Black
+					}
+					screen.Set(
+						int(x), int(y), color,
+					)
+				}
+			}
+		}
+
+	}
+}
+
+func distance2From(ax, ay, bx, by float64) float64 {
+	x := bx - ax
+	y := by - ay
+	return x*x + y*y
 }

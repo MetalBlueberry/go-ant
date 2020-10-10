@@ -102,16 +102,16 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	if g.camera.ZoomFactor < 0.1 {
 		g.camera.ZoomFactor = 0.1
 	}
-	if g.camera.ZoomFactor > 10 {
-		g.camera.ZoomFactor = 10
+	if g.camera.ZoomFactor > 20 {
+		g.camera.ZoomFactor = 20
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyR) {
-		g.camera.Rotation += 1
+	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
+		g.camera.Rotation += 10
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyF) {
-		g.camera.Rotation -= 1
+	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
+		g.camera.Rotation -= 10
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyKPAdd) {
@@ -188,7 +188,6 @@ func main() {
 	ebiten.SetWindowTitle("Hello, World!")
 	ebiten.SetWindowResizable(true)
 	ebiten.SetRunnableOnUnfocused(true)
-	// ebiten.SetMaxTPS(25)
 
 	sequence := "LLLRRRRRRLLL"
 	antGridSize := int64(500)
@@ -215,67 +214,4 @@ func main() {
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func DrawImage(ant *langton.Ant, screen *ebiten.Image, palette color.Palette, geo ebiten.GeoM) {
-	// for i := range ant.Cells {
-	// 	if ant.Cells[i].Step.Action == langton.ActionNone {
-	// 		continue
-	// 	}
-
-	// 	x, y := geo.Apply(
-	// 		// float64(sx),
-	// 		// float64(sy),
-	// 		float64(ant.Cells[i].X),
-	// 		float64(ant.Cells[i].Y),
-	// 	)
-	// 	p := image.Pt(int(x), int(y))
-	// 	if p.In(screen.Bounds()) {
-	// 		screen.Set(
-	// 			// int(ant.Cells[i].X),
-	// 			// int(ant.Cells[i].Y),
-	// 			int(x),
-	// 			int(y),
-	// 			// int((ant.Cells[i].X+ant.Dimensions.Width()/2)*int64(cellSize)+int64(sx)),
-	// 			// int((ant.Cells[i].Y+ant.Dimensions.Height()/2)*int64(cellSize)+int64(sy)),
-	// 			palette[ant.Cells[i].Step.Index+1],
-	// 		)
-	// 	}
-	// }
-
-	// if cellSize > 5 {
-	// 	cell := ant.Position
-	// 	for sx := 0; sx < cellSize; sx++ {
-	// 		for sy := 0; sy < cellSize; sy++ {
-	// 			radius := cellSize / 2
-	// 			if distance2From(sx, sy, radius, radius) <= (radius-1)*(radius-1) {
-	// 				var color color.Color
-	// 				switch {
-	// 				case ant.Direction == langton.DirectionLeft && sx < radius && sy == radius:
-	// 					color = colornames.Red
-	// 				case ant.Direction == langton.DirectionRight && sx > radius && sy == radius:
-	// 					color = colornames.Red
-	// 				case ant.Direction == langton.DirectionTop && sx == radius && sy > radius:
-	// 					color = colornames.Red
-	// 				case ant.Direction == langton.DirectionDown && sx == radius && sy < radius:
-	// 					color = colornames.Red
-	// 				default:
-	// 					color = colornames.Black
-	// 				}
-
-	// 				screen.Set(
-	// 					int((cell.X+ant.Dimensions.Width()/2)*int64(cellSize)+int64(sx)),
-	// 					int((cell.Y+ant.Dimensions.Height()/2)*int64(cellSize)+int64(sy)),
-	// 					color,
-	// 				)
-	// 			}
-	// 		}
-	// 	}
-	// }
-}
-
-func distance2From(ax, ay, bx, by int) int {
-	x := bx - ax
-	y := by - ay
-	return x*x + y*y
 }
