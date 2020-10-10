@@ -19,7 +19,9 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: ‘1.14.0’
+          go-version: ‘^1.14.0’
+      - name: Print version
+        run: go version
       - name: build wasm
         run: GOOS=js GOARCH=wasm go build -o ./docs/go-ant-ebiten.wasm   ./cmd/go-ant-ebiten/
 
