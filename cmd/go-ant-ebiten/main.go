@@ -131,9 +131,18 @@ func (g *Game) Update(screen *ebiten.Image) error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	tmp, err := ebiten.NewImage(
+		screen.Bounds().Dx(),
+		screen.Bounds().Dy(),
+		ebiten.FilterDefault,
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	wm := g.camera.WorldMatrix()
 
-	g.camera.DrawAnt(g.ant, screen, g.palette)
+	g.camera.DrawAnt(g.ant, tmp, g.palette)
 
 	cx, cy := ebiten.CursorPosition()
 	mx, my := wm.Apply(float64(cx), float64(cy))
@@ -145,6 +154,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		int64(my),
 	})
 
+	screen.DrawImage(tmp, &ebiten.DrawImageOptions{})
 	ebitenutil.DebugPrint(screen,
 		fmt.Sprintf(
 			`TPS: %0.2f
