@@ -215,7 +215,7 @@ func main() {
 		camera: Camera{
 			ViewPort:   f64.Vec2{screenSize, screenSize},
 			Position:   f64.Vec2{-screenSize / 2, -screenSize / 2},
-			ZoomFactor: 5,
+			ZoomFactor: 10,
 		},
 		ant:        ant,
 		palette:    langton.ToPalette(p),
