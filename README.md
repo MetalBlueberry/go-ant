@@ -2,6 +2,8 @@
 
 go-ant is a tool to play with Langton Ant representations.
 
+[LIVE DEMO](https://metalblueberry.github.io/go-ant/)
+
 ![awesome.git](pics/awesome.gif)
 ![out.git](pics/out.gif)
 
