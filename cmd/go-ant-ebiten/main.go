@@ -199,7 +199,8 @@ func main() {
 	ebiten.SetWindowResizable(true)
 	ebiten.SetRunnableOnUnfocused(true)
 
-	antGridSize := int64(10000)
+	sequence := "LR"
+	antGridSize := int64(1000)
 	ant := langton.NewAntFromString(
 		langton.NewBoard(antGridSize),
 		sequence,
