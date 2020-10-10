@@ -1,0 +1,25 @@
+name: deploy
+
+# Run this workflow every time a new commit pushed to your repository
+on: push
+
+jobs:
+  # Set the job key. The key is displayed as the job name
+  # when a job name is not provided
+  build:
+    # Name the Job
+    name: Build app
+    # Set the type of machine to run on
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks out a copy of your repository on the ubuntu-latest machine
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Runs the Super-Linter action
+      - name: go build
+        uses: golang:1.14.2
+        run: GOOS=js GOARCH=wasm go build -o ./docs/go-ant-ebiten.wasm   ./cmd/go-ant-ebiten/
+
+
