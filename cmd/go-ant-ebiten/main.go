@@ -193,6 +193,9 @@ Cell %s
 Now playing "%s"
 Steps x Seccond %0.2f
 Total Steps %d,
+Use asdw to pan, qe to zoom and zx to rotate.
+Or use the mouse click&drag and mouse wheel.
+Use +/- to increase or decrease the steps per seccond.
 Type sequence with LR and press Enter to play: "%s"`,
 			ebiten.CurrentTPS(),
 			ebiten.CurrentFPS(),
