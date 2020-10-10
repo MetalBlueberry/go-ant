@@ -34,6 +34,8 @@ type properties struct {
 	zoomSpeed      float64
 	wheelZoomSpeed float64
 	startDrag      image.Point
+	sequence       string
+	nextSequence   string
 
 	antStepsPerSeccond float64
 	antPendingSteps    float64
@@ -44,6 +46,7 @@ func defaultProperties() *properties {
 		camSpeed:       100.0,
 		zoomSpeed:      1,
 		wheelZoomSpeed: 5,
+		sequence:       "LR",
 
 		antStepsPerSeccond: 1,
 	}
@@ -106,11 +109,11 @@ func (g *Game) Update(screen *ebiten.Image) error {
 		g.camera.ZoomFactor = 20
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyX) {
 		g.camera.Rotation += 10
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyZ) {
 		g.camera.Rotation -= 10
 	}
 
@@ -119,6 +122,32 @@ func (g *Game) Update(screen *ebiten.Image) error {
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyKPSubtract) {
 		g.properties.antStepsPerSeccond /= 1.3 * (1 + delta)
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyL) {
+		g.properties.nextSequence += "L"
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
+		g.properties.nextSequence += "R"
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+		if len(g.properties.nextSequence) != 0 {
+			g.properties.sequence = g.properties.nextSequence
+			g.properties.nextSequence = ""
+
+			antGridSize := int64(1000)
+			g.ant = langton.NewAntFromString(
+				langton.NewBoard(antGridSize),
+				g.properties.sequence,
+			)
+
+			p, err := colorful.HappyPalette(len(g.properties.sequence))
+			if err != nil {
+				panic(err)
+			}
+			g.palette = langton.ToPalette(p)
+		}
 	}
 
 	g.properties.antPendingSteps += g.properties.antStepsPerSeccond * delta
@@ -161,12 +190,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 FPS: %0.2f
 mouse %s
 cell %s
-Steps x Seccond %.2f`,
+Steps x Seccond %.2f
+Sequence %s
+Press enter to play sequence %s`,
 			ebiten.CurrentTPS(),
 			ebiten.CurrentFPS(),
 			image.Pt(int(mx), int(my)),
 			cell,
 			g.properties.antStepsPerSeccond,
+			g.properties.sequence,
+			g.properties.nextSequence,
 		))
 }
 
