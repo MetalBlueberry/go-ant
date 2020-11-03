@@ -17,10 +17,12 @@ type Ant struct {
 	stuck      bool
 }
 
+// NewAntFromString creates a new ant in a board with the given Dimensions for a sequence defined by a string of LR characters
 func NewAntFromString(dimensions Dimensions, steps string) *Ant {
 	return NewAnt(dimensions, StepsFromString(steps)...)
 }
 
+// NewAnt creates a new ant in a board with the given Dimensions following the steps
 func NewAnt(dimensions Dimensions, steps ...Step) *Ant {
 
 	Steps(steps).Numerate()
@@ -38,14 +40,17 @@ func NewAnt(dimensions Dimensions, steps ...Step) *Ant {
 	}
 }
 
+// TotalSteps returns the total steps performed by the ant
 func (ant *Ant) TotalSteps() int64 {
 	return ant.totalSteps
 }
 
+// Stuck returns true if the ant can not move because it will fall out the board
 func (ant *Ant) Stuck() bool {
 	return ant.stuck
 }
 
+// Next computes the next step and returns the cell position, Fails if it moves out the board
 func (ant *Ant) Next() (*Cell, error) {
 	if ant.stuck {
 		return nil, errors.New("Ant is stuck, grow the grid before calling Next")
@@ -57,7 +62,7 @@ func (ant *Ant) Next() (*Cell, error) {
 
 	nextPoint := ant.Position.Point.Walk(ant.Direction)
 
-	nextPosition, err := ant.EnsureCellAt(nextPoint)
+	nextPosition, err := ant.ensureCellAt(nextPoint)
 	if err != nil {
 		ant.stuck = true
 
@@ -72,6 +77,7 @@ func (ant *Ant) Next() (*Cell, error) {
 	return ant.Position, nil
 }
 
+// NextN computes n next steps and returns the cell position, Fails if it moves out the board
 func (ant *Ant) NextN(steps int) (cell *Cell, err error) {
 	if steps < 0 {
 		panic("steps must be >= 0")
@@ -88,6 +94,7 @@ func (ant *Ant) NextN(steps int) (cell *Cell, err error) {
 	return cell, err
 }
 
+// CellAt returns the cell at the given coordinates. It fails if the ant has never visited that cell
 func (ant *Ant) CellAt(position Point) (*Cell, error) {
 	if !ant.Dimensions.isPointInside(position) {
 		return nil, errors.New("Next step is out of bounds")
@@ -100,7 +107,8 @@ func (ant *Ant) CellAt(position Point) (*Cell, error) {
 	return cell, nil
 }
 
-func (ant *Ant) EnsureCellAt(position Point) (*Cell, error) {
+// ensureCellAt creates or returns the cell at the given position
+func (ant *Ant) ensureCellAt(position Point) (*Cell, error) {
 	if !ant.Dimensions.isPointInside(position) {
 		return nil, errors.New("Next step is out of bounds")
 	}
@@ -116,6 +124,7 @@ func (ant *Ant) EnsureCellAt(position Point) (*Cell, error) {
 	return cell, nil
 }
 
+// Grow increases the grid dimensions, fails if the dimensions provided are smaller than or equal to the current dimension
 func (ant *Ant) Grow(dimensions Dimensions) error {
 	if ant.Dimensions.height >= dimensions.height || ant.Dimensions.width >= dimensions.width {
 		return errors.New("New dimensions are equal or smaller than the current dimensions")
@@ -136,6 +145,8 @@ func (ant *Ant) Grow(dimensions Dimensions) error {
 	return nil
 }
 
+// StringMargin returns a string representation of the board with a given margin.
+// It is useful for testing purposes
 func (ant *Ant) StringMargin(margin int64) string {
 	minX := ant.Dimensions.BottomLeft.X - margin
 	minY := ant.Dimensions.BottomLeft.Y - margin
@@ -172,6 +183,7 @@ func (ant *Ant) StringMargin(margin int64) string {
 	return builder.String()
 }
 
+// String returns a string representation of the board with margin 0
 func (ant *Ant) String() string {
 	return ant.StringMargin(0)
 }
