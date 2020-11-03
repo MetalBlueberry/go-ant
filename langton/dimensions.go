@@ -4,10 +4,13 @@ import (
 	"fmt"
 )
 
+// NewBoard creates a squared board with side equals to size/2+1
+// Just because it is handy
 func NewBoard(size int64) Dimensions {
 	return NewDimensions(-size, -size, size, size)
 }
 
+// Creates a board with the given coordinates
 func NewDimensions(minX, minY, maxX, maxY int64) Dimensions {
 	dim := Dimensions{
 		BottomLeft: Point{
@@ -23,6 +26,14 @@ func NewDimensions(minX, minY, maxX, maxY int64) Dimensions {
 	return dim
 }
 
+// Init must be always called after creation, it precalculates some internal values
+func (dim *Dimensions) Init() {
+	dim.height = dim.TopRight.X - dim.BottomLeft.X + 1
+	dim.width = dim.TopRight.Y - dim.BottomLeft.Y + 1
+	dim.Size = dim.height * dim.width
+}
+
+// Dimensions represent the area that the ant can explore
 type Dimensions struct {
 	TopRight   Point
 	BottomLeft Point
@@ -32,6 +43,7 @@ type Dimensions struct {
 	Size   int64
 }
 
+// Point is a x y pair
 type Point struct {
 	X int64
 	Y int64
@@ -45,16 +57,23 @@ func (point Point) String() string {
 	)
 }
 
+// Direction is an enum used to track the ant direction
 type Direction int
 
 const (
+	// DirectionTop moves up
 	DirectionTop Direction = iota
+	// DirectionRight moves right
 	DirectionRight
+	// DirectionDown moves down
 	DirectionDown
+	// DirectionLeft moves left
 	DirectionLeft
+	// DirectionInvalid is an invalid direction
 	DirectionInvalid
 )
 
+// Turn changes the Direction based on the provided Action
 func (d Direction) Turn(action Action) Direction {
 	switch action {
 	case ActionTurnLeft:
@@ -67,6 +86,8 @@ func (d Direction) Turn(action Action) Direction {
 		panic("Invalid action provided")
 	}
 }
+
+// Unturn performs the opposite operation to Turn
 func (d Direction) Unturn(action Action) Direction {
 	switch action {
 	case ActionTurnLeft:
@@ -80,6 +101,7 @@ func (d Direction) Unturn(action Action) Direction {
 	}
 }
 
+// Walk moves the ant in the given Direction, returns the final position
 func (point Point) Walk(direction Direction) Point {
 	switch direction {
 	case DirectionTop:
@@ -95,12 +117,7 @@ func (point Point) Walk(direction Direction) Point {
 	return point
 }
 
-func (dim *Dimensions) Init() {
-	dim.height = dim.TopRight.X - dim.BottomLeft.X + 1
-	dim.width = dim.TopRight.Y - dim.BottomLeft.Y + 1
-	dim.Size = dim.height * dim.width
-}
-
+// Center returns the center of the Dimensions
 func (dim *Dimensions) Center() Point {
 	return Point{
 		X: (dim.BottomLeft.X + dim.TopRight.X) / 2,
@@ -108,14 +125,17 @@ func (dim *Dimensions) Center() Point {
 	}
 }
 
+// Width returns the width of the Dimensions
 func (dim *Dimensions) Width() int64 {
 	return dim.width
 }
 
+// Height returns the Height of the Dimensions
 func (dim *Dimensions) Height() int64 {
 	return dim.height
 }
 
+// isPointInside returns true if the point is inside the Dimensions
 func (dim *Dimensions) isPointInside(p Point) bool {
 	return p.X >= dim.BottomLeft.X &&
 		p.X <= dim.TopRight.X &&
@@ -123,12 +143,14 @@ func (dim *Dimensions) isPointInside(p Point) bool {
 		p.Y <= dim.TopRight.Y
 }
 
-func (dim *Dimensions) IndexOf(p Point) int {
+// indexOf returns the index of a given point. Is to map a 2 dimensions into 1 slice
+func (dim *Dimensions) indexOf(p Point) int {
 	x := p.X - dim.BottomLeft.X
 	y := p.Y - dim.BottomLeft.Y
 	return int((x) + (y)*dim.height)
 }
 
+// String returns a string representation
 func (dim *Dimensions) String() string {
 	return fmt.Sprintf("%dx%d", dim.width, dim.height)
 }

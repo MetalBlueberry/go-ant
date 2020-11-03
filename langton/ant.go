@@ -28,7 +28,7 @@ func NewAnt(dimensions Dimensions, steps ...Step) *Ant {
 	Steps(steps).Numerate()
 
 	cells := make([]Cell, dimensions.Size, dimensions.Size)
-	cell := &cells[dimensions.IndexOf(dimensions.Center())]
+	cell := &cells[dimensions.indexOf(dimensions.Center())]
 	cell.Point = dimensions.Center()
 	cell.Step = steps[0]
 
@@ -99,7 +99,7 @@ func (ant *Ant) CellAt(position Point) (*Cell, error) {
 	if !ant.Dimensions.isPointInside(position) {
 		return nil, errors.New("Next step is out of bounds")
 	}
-	posIndex := ant.Dimensions.IndexOf(position)
+	posIndex := ant.Dimensions.indexOf(position)
 	cell := &ant.Cells[posIndex]
 	if cell.Step.Action == ActionNone {
 		return nil, errors.New("Cell not initialized")
@@ -112,7 +112,7 @@ func (ant *Ant) ensureCellAt(position Point) (*Cell, error) {
 	if !ant.Dimensions.isPointInside(position) {
 		return nil, errors.New("Next step is out of bounds")
 	}
-	posIndex := ant.Dimensions.IndexOf(position)
+	posIndex := ant.Dimensions.indexOf(position)
 	cell := &ant.Cells[posIndex]
 	if cell.Step.Action == ActionNone {
 		ant.Cells[posIndex] = Cell{
@@ -136,11 +136,11 @@ func (ant *Ant) Grow(dimensions Dimensions) error {
 		if old.Step.Action == ActionNone {
 			continue
 		}
-		newCells[dimensions.IndexOf(old.Point)] = old
+		newCells[dimensions.indexOf(old.Point)] = old
 	}
 	ant.Cells = newCells
 	ant.Dimensions = dimensions
-	ant.Position = &newCells[dimensions.IndexOf(ant.Position.Point)]
+	ant.Position = &newCells[dimensions.indexOf(ant.Position.Point)]
 	ant.stuck = false
 	return nil
 }
@@ -162,7 +162,7 @@ func (ant *Ant) StringMargin(margin int64) string {
 				Y: y,
 			}
 			if ant.Dimensions.isPointInside(p) {
-				cell := ant.Cells[ant.Dimensions.IndexOf(p)]
+				cell := ant.Cells[ant.Dimensions.indexOf(p)]
 				if cell.Step.Action != ActionNone {
 					builder.WriteRune(rune(cell.Step.Action))
 					continue
