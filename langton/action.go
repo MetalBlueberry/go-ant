@@ -1,7 +1,9 @@
 package langton
 
+// Action represents what the ant does on a given Cell
 type Action rune
 
+// String returns an Action string representation
 func (action Action) String() string {
 	switch action {
 	case ActionTurnLeft:
@@ -16,8 +18,12 @@ func (action Action) String() string {
 }
 
 const (
-	ActionNone      Action = 0
-	ActionTurnLeft         = 'L'
-	ActionTurnRight        = 'R'
-	ActionStraight         = 'S'
+	// ActionNone does nothing
+	ActionNone Action = 0
+	// ActionTurnLeft turns left
+	ActionTurnLeft = 'L'
+	// ActionTurnRight turns right
+	ActionTurnRight = 'R'
+	// ActionStraight does not change direction
+	ActionStraight = 'S'
 )
