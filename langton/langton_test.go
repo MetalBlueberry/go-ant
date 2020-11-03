@@ -6,6 +6,11 @@ import (
 	"testing"
 )
 
+var (
+	StepsSimple  Steps = StepsFromString("LR")
+	StepsAwesome Steps = StepsFromString("RLLLLRRRLLL")
+)
+
 func Test0(t *testing.T) {
 	Iterations(t, 0, `
 --|--
