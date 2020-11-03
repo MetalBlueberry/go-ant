@@ -9,24 +9,9 @@ import (
 	"golang.org/x/image/colornames"
 )
 
-func ToPalette(palette []colorful.Color) color.Palette {
-	colorPalette := make(color.Palette, len(palette)+1)
-	colorPalette[0] = color.Alpha{}
-	for i := range palette {
-
-		r, g, b := palette[i].RGB255()
-
-		_, _, _, a := palette[i].RGBA()
-		colorPalette[i+1] = color.RGBA{
-			R: r,
-			G: g,
-			B: b,
-			A: uint8(math.Sqrt(float64(a))),
-		}
-	}
-	return colorPalette
-}
-
+// ToImage generates a image.Paletted with the current ant state.
+// The cell size is in pixels
+// If the cell size is bigger than 5, the ant will be drawn as a black dot
 func ToImage(ant *Ant, palette color.Palette, cellSize int) *image.Paletted {
 
 	r := image.Rect(
@@ -60,7 +45,7 @@ func ToImage(ant *Ant, palette color.Palette, cellSize int) *image.Paletted {
 		for sx := 0; sx < cellSize; sx++ {
 			for sy := 0; sy < cellSize; sy++ {
 				radius := cellSize / 2
-				if Distance2From(sx, sy, radius, radius) <= (radius-1)*(radius-1) {
+				if distance2From(sx, sy, radius, radius) <= (radius-1)*(radius-1) {
 					var color int
 					switch {
 					case ant.Direction == DirectionLeft && sx < radius && sy == radius:
@@ -87,8 +72,27 @@ func ToImage(ant *Ant, palette color.Palette, cellSize int) *image.Paletted {
 	return img
 }
 
-func Distance2From(ax, ay, bx, by int) int {
+func distance2From(ax, ay, bx, by int) int {
 	x := bx - ax
 	y := by - ay
 	return x*x + y*y
+}
+
+// ToPalette is an utility function to use colorful.Color arrays as a color.Palette
+func ToPalette(palette []colorful.Color) color.Palette {
+	colorPalette := make(color.Palette, len(palette)+1)
+	colorPalette[0] = color.Alpha{}
+	for i := range palette {
+
+		r, g, b := palette[i].RGB255()
+
+		_, _, _, a := palette[i].RGBA()
+		colorPalette[i+1] = color.RGBA{
+			R: r,
+			G: g,
+			B: b,
+			A: uint8(math.Sqrt(float64(a))),
+		}
+	}
+	return colorPalette
 }
