@@ -16,10 +16,6 @@ import (
 	"golang.org/x/text/message"
 )
 
-const (
-	screenSize = 600
-)
-
 type Game struct {
 	ant     *langton.Ant
 	palette color.Palette
@@ -228,7 +224,7 @@ func drawVLine(dst *ebiten.Image, x, y, len, size float64, clr color.Color) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return screenSize, screenSize
+	return outsideWidth, outsideHeight
 }
 
 func main() {
@@ -247,11 +243,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	width, height := ebiten.ScreenSizeInFullscreen()
 	g := &Game{
 		camera: Camera{
-			ViewPort:   f64.Vec2{screenSize, screenSize},
-			Position:   f64.Vec2{-screenSize / 2, -screenSize / 2},
+			ViewPort:   f64.Vec2{float64(width), float64(height)},
+			Position:   f64.Vec2{-float64(width) / 2, -float64(height) / 2},
 			ZoomFactor: 10,
 		},
 		ant:        ant,
