@@ -94,15 +94,20 @@ func (ant *Ant) NextN(steps int) (cell *Cell, err error) {
 	return cell, err
 }
 
+var (
+	ErrOutOfBounds    = errors.New("Next step is out of bounds")
+	ErrNotInitialized = errors.New("Cell not initialized")
+)
+
 // CellAt returns the cell at the given coordinates. It fails if the ant has never visited that cell
 func (ant *Ant) CellAt(position Point) (*Cell, error) {
 	if !ant.Dimensions.isPointInside(position) {
-		return nil, errors.New("Next step is out of bounds")
+		return nil, ErrOutOfBounds
 	}
 	posIndex := ant.Dimensions.indexOf(position)
 	cell := &ant.Cells[posIndex]
 	if cell.Step.Action == ActionNone {
-		return nil, errors.New("Cell not initialized")
+		return nil, ErrNotInitialized
 	}
 	return cell, nil
 }
