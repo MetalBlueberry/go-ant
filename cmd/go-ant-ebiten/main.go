@@ -1,11 +1,14 @@
 package main
 
 import (
+	"flag"
 	"go-ant/langton"
 	"image"
 	"image/color"
 	"log"
 	"math"
+	"os"
+	"runtime/pprof"
 	"time"
 
 	"github.com/hajimehoshi/ebiten"
@@ -229,7 +232,20 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return outsideWidth, outsideHeight
 }
 
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
 func main() {
+
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
 	ebiten.SetWindowTitle("Hello, World!")
 	ebiten.SetWindowResizable(true)
 	ebiten.SetRunnableOnUnfocused(true)
