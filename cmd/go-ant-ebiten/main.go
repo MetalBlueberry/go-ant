@@ -169,12 +169,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		panic(err)
 	}
 
-	wm := g.camera.WorldMatrix()
-
 	g.camera.DrawAnt(g.ant, tmp, g.palette)
 
 	cx, cy := ebiten.CursorPosition()
-	mx, my := wm.Apply(float64(cx), float64(cy))
+	mx, my := g.camera.ScreenToWorld(cx, cy)
 	mx = math.Floor(mx)
 	my = math.Floor(my)
 
