@@ -12,10 +12,11 @@ import (
 )
 
 type Camera struct {
-	ViewPort   f64.Vec2
-	Position   f64.Vec2
-	ZoomFactor float64
-	Rotation   float64
+	ViewPort        f64.Vec2
+	Position        f64.Vec2
+	InitialPosition f64.Vec2
+	ZoomFactor      float64
+	Rotation        float64
 }
 
 func (c *Camera) String() string {
@@ -41,6 +42,7 @@ func (c *Camera) Apply(x, y int) (int, int) {
 
 func (c *Camera) WorldMatrix() ebiten.GeoM {
 	m := ebiten.GeoM{}
+	m.Translate(-c.InitialPosition[0], -c.InitialPosition[1])
 	m.Translate(-c.Position[0], -c.Position[1])
 	// We want to scale and rotate around center of image / screen
 	m.Translate(-c.viewportCenter()[0], -c.viewportCenter()[1])

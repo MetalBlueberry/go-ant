@@ -224,6 +224,8 @@ func drawVLine(dst *ebiten.Image, x, y, len, size float64, clr color.Color) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	g.camera.ViewPort = f64.Vec2{float64(outsideWidth), float64(outsideHeight)}
+	g.camera.InitialPosition = f64.Vec2{-float64(outsideWidth) / 2, -float64(outsideHeight) / 2}
 	return outsideWidth, outsideHeight
 }
 
@@ -243,11 +245,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	width, height := ebiten.ScreenSizeInFullscreen()
 	g := &Game{
 		camera: Camera{
-			ViewPort:   f64.Vec2{float64(width), float64(height)},
-			Position:   f64.Vec2{-float64(width) / 2, -float64(height) / 2},
 			ZoomFactor: 10,
 		},
 		ant:        ant,
