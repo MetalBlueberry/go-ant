@@ -124,42 +124,49 @@ func (c *Camera) DrawAnt(ant *langton.Ant, screen *ebiten.Image, palette color.P
 		}
 	}
 
-	// cell := ant.Position
-	// antx, anty := c.ScreenToWorld(int(cell.X), int(cell.Y))
-	// antmaxx, antmaxy := c.ScreenToWorld(int(cell.X)+1, int(cell.Y)+1)
+	// wm := c.WorldMatrix()
+
+	// antx, anty := wm.Apply(float64(cell.X), float64(cell.Y))
+	// antmaxx, antmaxy := wm.Apply(float64(cell.X+1), float64(cell.Y+1))
 	// antCenterX := math.Ceil((antx + antmaxx) / 2)
 	// antCenterY := math.Ceil((anty + antmaxy) / 2)
-	// antSize := (antmaxx - antx) * 0.9
 
-	// if antSize >= 4 {
+	antSize := 1 / (math.Sqrt(vectorx[0]*vectorx[0] + vectorx[1]*vectorx[1]))
 
-	// 	for x := math.Floor(antx); x < antmaxx; x++ {
-	// 		for y := math.Floor(anty); y < antmaxy; y++ {
-	// 			if distance2From(x, y, antCenterX, antCenterY) < antSize {
-	// 				var color color.Color
-	// 				switch {
-	// 				case ant.Direction == langton.DirectionLeft && x < antCenterX && y == antCenterY:
-	// 					color = colornames.Red
-	// 				case ant.Direction == langton.DirectionRight && x > antCenterX && y == antCenterY:
-	// 					color = colornames.Red
-	// 				case ant.Direction == langton.DirectionTop && x == antCenterX && y > antCenterY:
-	// 					color = colornames.Red
-	// 				case ant.Direction == langton.DirectionDown && x == antCenterX && y < antCenterY:
-	// 					color = colornames.Red
-	// 				default:
-	// 					color = colornames.Black
-	// 				}
-	// 				screen.Set(
-	// 					int(x), int(y), color,
-	// 				)
-	// 			}
-	// 		}
-	// 	}
+	if antSize >= 4 {
+		cell := ant.Position
+		x, y := float64(cell.X), float64(cell.Y)
+		wm := c.WorldMatrix()
+		sx, sy := wm.Apply(x, y)
 
-	// }
+		geoM := ebiten.GeoM{}
+		geoM.Rotate(c.Rotation * 2 * math.Pi / 360)
 
-	// c.Render(OffScreen, screen)
-	// screen.DrawImage(OffScreen, nil)
+		geoM.Translate(-float64(AntImage.Bounds().Dx())/2.0, -float64(AntImage.Bounds().Dx())/2.0)
+		switch ant.Direction {
+		case langton.DirectionRight:
+			geoM.Rotate(math.Pi / 2)
+		case langton.DirectionTop:
+			geoM.Rotate(math.Pi)
+		case langton.DirectionLeft:
+			geoM.Rotate(3 * math.Pi / 2)
+		}
+
+		switch cell.Step.Action {
+		case langton.ActionTurnRight:
+			geoM.Rotate(-math.Pi / 2)
+		case langton.ActionTurnLeft:
+			geoM.Rotate(math.Pi / 2)
+		}
+		geoM.Translate(float64(AntImage.Bounds().Dx())/2.0, float64(AntImage.Bounds().Dx())/2.0)
+
+		geoM.Scale(antSize/float64(AntImage.Bounds().Dx()), antSize/float64(AntImage.Bounds().Dy()))
+		geoM.Translate(sx, sy)
+
+		screen.DrawImage(AntImage, &ebiten.DrawImageOptions{
+			GeoM: geoM,
+		})
+	}
 }
 
 func distance2From(ax, ay, bx, by float64) float64 {

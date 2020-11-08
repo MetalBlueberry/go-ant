@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"go-ant/langton"
 	"image"
@@ -51,6 +52,24 @@ func defaultProperties() *properties {
 		antStepsPerSeccond: 1,
 	}
 
+}
+
+//go:generate file2byteslice -input ant.png -output ant.go -package main -var AntImageSource
+var (
+	AntImage *ebiten.Image
+)
+
+func init() {
+	var err error
+	img, _, err := image.Decode(bytes.NewReader(AntImageSource))
+	if err != nil {
+		panic(err)
+	}
+
+	AntImage, err = ebiten.NewImageFromImage(img, ebiten.FilterDefault)
+	if err != nil {
+		panic(err)
+	}
 }
 
 var previous time.Time
