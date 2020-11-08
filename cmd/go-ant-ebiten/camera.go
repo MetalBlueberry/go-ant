@@ -80,22 +80,6 @@ func MapVector(origin f64.Vec2, geoM ebiten.GeoM) (f64.Vec2, f64.Vec2, f64.Vec2)
 		f64.Vec2{yx - originx, yy - originy}
 }
 
-func cache(ant *langton.Ant) func(p langton.Point) (*langton.Cell, error) {
-	type pair struct {
-		cell *langton.Cell
-		err  error
-	}
-	cache := make(map[langton.Point]pair)
-	return func(p langton.Point) (*langton.Cell, error) {
-		if v, ok := cache[p]; ok {
-			return v.cell, v.err
-		}
-		c, err := ant.CellAt(p)
-		cache[p] = pair{c, err}
-		return c, err
-	}
-}
-
 func (c *Camera) DrawAnt(ant *langton.Ant, screen *ebiten.Image, palette color.Palette) {
 	bounds := screen.Bounds()
 	geo := c.WorldMatrix()
