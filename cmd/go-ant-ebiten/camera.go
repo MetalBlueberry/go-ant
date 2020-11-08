@@ -108,13 +108,6 @@ func (c *Camera) DrawAnt(ant *langton.Ant, screen *ebiten.Image, palette color.P
 		}
 	}
 
-	// wm := c.WorldMatrix()
-
-	// antx, anty := wm.Apply(float64(cell.X), float64(cell.Y))
-	// antmaxx, antmaxy := wm.Apply(float64(cell.X+1), float64(cell.Y+1))
-	// antCenterX := math.Ceil((antx + antmaxx) / 2)
-	// antCenterY := math.Ceil((anty + antmaxy) / 2)
-
 	antSize := 1 / (math.Sqrt(vectorx[0]*vectorx[0] + vectorx[1]*vectorx[1]))
 
 	if antSize >= 4 {
