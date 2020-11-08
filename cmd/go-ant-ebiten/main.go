@@ -46,7 +46,7 @@ func defaultProperties() *properties {
 	return &properties{
 		camSpeed:       100.0,
 		zoomSpeed:      1,
-		wheelZoomSpeed: 5,
+		wheelZoomSpeed: 0.5,
 		sequence:       "LR",
 
 		antStepsPerSeccond: 1,
@@ -109,17 +109,17 @@ func (g *Game) Update(screen *ebiten.Image) error {
 
 	_, mouseWheel := ebiten.Wheel()
 	if mouseWheel > 0 {
-		g.camera.ZoomFactor += g.properties.wheelZoomSpeed * delta * g.camera.ZoomFactor
+		g.camera.ZoomFactor += g.properties.wheelZoomSpeed * g.camera.ZoomFactor
 	}
 	if mouseWheel < 0 {
-		g.camera.ZoomFactor -= g.properties.wheelZoomSpeed * delta * g.camera.ZoomFactor
+		g.camera.ZoomFactor -= g.properties.wheelZoomSpeed * g.camera.ZoomFactor
 	}
 
 	if ebiten.IsKeyPressed(ebiten.KeyQ) {
-		g.camera.ZoomFactor -= g.properties.zoomSpeed * delta * g.camera.ZoomFactor
+		g.camera.ZoomFactor -= g.properties.zoomSpeed * g.camera.ZoomFactor
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyE) {
-		g.camera.ZoomFactor += g.properties.zoomSpeed * delta * g.camera.ZoomFactor
+		g.camera.ZoomFactor += g.properties.zoomSpeed * g.camera.ZoomFactor
 	}
 	if g.camera.ZoomFactor < 0.1 {
 		g.camera.ZoomFactor = 0.1
@@ -156,7 +156,7 @@ func (g *Game) Update(screen *ebiten.Image) error {
 			g.properties.nextSequence = ""
 		}
 
-		antGridSize := int64(1000)
+		antGridSize := int64(3000)
 		g.ant = langton.NewAntFromString(
 			langton.NewBoard(antGridSize),
 			g.properties.sequence,
